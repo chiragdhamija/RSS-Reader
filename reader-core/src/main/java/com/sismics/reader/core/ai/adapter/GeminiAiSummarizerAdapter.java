@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class GeminiAiSummarizerAdapter implements AiSummarizerAdapter {
 
     private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-    private static final String GEMINI_API_KEY = "AIzaSyAA5x7L5KWC2tFA16JoattUtOmEt1-rTTo";
+    private static final String GEMINI_API_KEY = "";
 
     @Override
     public String generateSummary(String prompt) throws Exception {
