@@ -1,0 +1,2182 @@
+@startuml
+
+'-----------------------------
+' 1. FeedSubscription
+'-----------------------------
+class FeedSubscription {
+  - String id
+  - String userId
+  - String feedId
+  - String categoryId
+  - String title
+  - Integer order
+  - Integer unreadCount
+  - Date createDate
+  - Date deleteDate
+
+  + String getId()
+  + void setId(String id)
+  + String getUserId()
+  + void setUserId(String userId)
+  + String getFeedId()
+  + void setFeedId(String feedId)
+  + String getCategoryId()
+  + void setCategoryId(String categoryId)
+  + String getTitle()
+  + void setTitle(String title)
+  + Integer getOrder()
+  + void setOrder(Integer order)
+  + Integer getUnreadCount()
+  + void setUnreadCount(Integer unreadCount)
+  + Date getCreateDate()
+  + void setCreateDate(Date createDate)
+  + Date getDeleteDate()
+  + void setDeleteDate(Date deleteDate)
+  + String toString()
+}
+' From text: "Associations: NA", "Inheritance: NA"
+
+'-----------------------------
+' 2. FeedSynchronization
+'-----------------------------
+class FeedSynchronization {
+  - String id
+  - String feedId
+  - boolean success
+  - String message
+  - Integer duration
+  - Date createDate
+
+  + String getId()
+  + void setId(String id)
+  + String getFeedId()
+  + void setFeedId(String feedId)
+  + boolean isSuccess()
+  + void setSuccess(boolean success)
+  + String getMessage()
+  + void setMessage(String message)
+  + Integer getDuration()
+  + void setDuration(Integer duration)
+  + Date getCreateDate()
+  + void setCreateDate(Date createDate)
+  + String toString()
+}
+' From text: "Associations: none"
+
+'-----------------------------
+' 3. FeedDao
+'-----------------------------
+class FeedDao {
+  - EntityManager em
+
+  # QueryParam getQueryParam(FeedCriteria, FilterCriteria)
+  + String create(Feed feed)
+  + void delete(String id)
+  + Feed getByRssUrl(String rssUrl)
+  + Feed update(Feed feed)
+}
+' Inheritance: Parent Class: BaseDao<FeedDto, FeedCriteria>
+FeedDao --|> BaseDao
+
+' Associations: Dependency on Feed, EntityManager, ThreadLocalContext, FilterCriteria, QueryParam
+FeedDao ..> Feed
+FeedDao ..> EntityManager
+FeedDao ..> ThreadLocalContext
+FeedDao ..> FilterCriteria
+FeedDao ..> QueryParam
+
+'-----------------------------
+' 4. FeedSubscriptionDao
+'-----------------------------
+class FeedSubscriptionDao {
+  - EntityManager em
+
+  + QueryParam getQueryParam(FeedSubscriptionCriteria, FilterCriteria)
+  + String create(FeedSubscription)
+  + FeedSubscription update(FeedSubscription)
+  + void updateUnreadCount(String, Integer)
+  + void reorder(FeedSubscription, int)
+  + void delete(String)
+  + FeedSubscription getFeedSubscription(String, String)
+  + List<FeedSubscription> findByCategory(String)
+  + int getCategoryCount(String, String)
+}
+' Inheritance: Parent Class: BaseDao<FeedSubscriptionDto, FeedSubscriptionCriteria>
+FeedSubscriptionDao --|> BaseDao
+
+' Associations: depends on EntityManager, FeedSubscriptionMapper, QueryParam,
+'               FeedSubscription, FeedSubscriptionDto, FeedSubscriptionCriteria
+FeedSubscriptionDao ..> EntityManager
+FeedSubscriptionDao ..> FeedSubscriptionMapper
+FeedSubscriptionDao ..> QueryParam
+FeedSubscriptionDao ..> FeedSubscription
+FeedSubscriptionDao ..> FeedSubscriptionDto
+FeedSubscriptionDao ..> FeedSubscriptionCriteria
+
+'-----------------------------
+' 5. FeedSynchronizationDao
+'-----------------------------
+class FeedSynchronizationDao {
+  + String create(FeedSynchronization feedSynchronization)
+  + void deleteOldFeedSynchronization(String feedId, int minutes)
+  + List<FeedSynchronization> findByFeedId(String feedId)
+}
+' Associations: uses EntityManager, DialectUtil, works with FeedSynchronization
+FeedSynchronizationDao ..> EntityManager
+FeedSynchronizationDao ..> DialectUtil
+FeedSynchronizationDao ..> FeedSynchronization
+
+'-----------------------------
+' 6. FeedSubscriptionCriteria
+'-----------------------------
+class FeedSubscriptionCriteria {
+  - String id
+  - String userId
+  - String feedId
+  - String categoryId
+  - String feedUrl
+  - boolean unread
+
+  + String getId()
+  + FeedSubscriptionCriteria setId(String id)
+  + String getUserId()
+  + FeedSubscriptionCriteria setUserId(String userId)
+  + String getFeedId()
+  + FeedSubscriptionCriteria setFeedId(String feedId)
+  + String getCategoryId()
+  + FeedSubscriptionCriteria setCategoryId(String categoryId)
+  + String getFeedUrl()
+  + FeedSubscriptionCriteria setFeedUrl(String feedUrl)
+  + boolean isUnread()
+  + FeedSubscriptionCriteria setUnread(boolean unread)
+}
+' From text: "No explicit associations," "Inheritance: none"
+
+'-----------------------------
+' 7. FeedSubscriptionMapper
+'-----------------------------
+class FeedSubscriptionMapper {
+  + FeedSubscriptionDto map(Object[] o)
+}
+' Inheritance: Parent Class = ResultMapper<FeedSubscriptionDto>
+FeedSubscriptionMapper --|> ResultMapper
+
+' Dependency: FeedSubscriptionDto
+FeedSubscriptionMapper ..> FeedSubscriptionDto
+
+'-----------------------------
+' 8. FeedService
+'-----------------------------
+class FeedService {
+  - static Logger log  'text says 'private stati' but we treat it as private static
+  --
+  + void startUp()
+  + void shutDown()
+  + void runOneIteration()
+  + Scheduler scheduler()
+  + void synchronizeAllFeeds()
+  + Feed synchronize(String url)
+  + void createInitialUserArticle(String userId, FeedSubscription feedSubscription)
+  - void completeArticleList(List<Article> articleList)
+  - List<Article> getArticleToRemove(List<Article> articleList)
+  - boolean isFaviconUpdated(Feed feed)
+  - RssReader parseFeedOrPage(String url, boolean parsePage)
+  - void logParsingError(String url, Exception e)
+}
+' Inheritance: Parent Class: AbstractScheduledService
+FeedService --|> AbstractScheduledService
+
+' Associations:
+' Dependency: TransactionUtil, Logger, AppContext, ArticleCreatedAsyncEvent, ArticleDeletedAsyncEvent
+FeedService ..> TransactionUtil
+FeedService ..> Logger
+FeedService ..> AppContext
+FeedService ..> ArticleCreatedAsyncEvent
+FeedService ..> ArticleDeletedAsyncEvent
+
+' Aggregation: FeedDao, FeedSynchronizationDao, FeedSubscriptionDao, ArticleDao, UserArticleDao
+FeedService o-- FeedDao
+FeedService o-- FeedSynchronizationDao
+FeedService o-- FeedSubscriptionDao
+FeedService o-- ArticleDao
+FeedService o-- UserArticleDao
+
+' Composition: FeedSynchronization, ArticleSanitizer, FaviconUpdateRequestedEvent
+FeedService *-- FeedSynchronization
+FeedService *-- ArticleSanitizer
+FeedService *-- FaviconUpdateRequestedEvent
+
+'-----------------------------
+' 9. FeedChooserStrategy
+'-----------------------------
+class FeedChooserStrategy {
+  + String guess(List<String> feedList)
+}
+' text: "Associations: NA", "Inheritance: NA"
+
+'-----------------------------
+' 10. Feed
+'-----------------------------
+class Feed {
+  - String id
+  - String rssUrl
+  - String url
+  - String baseUri
+  - String title
+  - String language
+  - String description
+  - Date createDate
+  - Date lastFetchDate
+  - Date deleteDate
+
+  + String getId()
+  + void setId(String id)
+  + String getRssUrl()
+  + void setRssUrl(String rssUrl)
+  + String getUrl()
+  + void setUrl(String url)
+  + String getBaseUri()
+  + void setBaseUri(String baseUri)
+  + String getTitle()
+  + void setTitle(String title)
+  + String getLanguage()
+  + void setLanguage(String language)
+  + String getDescription()
+  + void setDescription(String description)
+  + Date getCreateDate()
+  + void setCreateDate(Date createDate)
+  + Date getLastFetchDate()
+  + void setLastFetchDate(Date lastFetchDate)
+  + Date getDeleteDate()
+  + void setDeleteDate(Date deleteDate)
+  + String toString()
+}
+' text: "Aggregation: Article: Feed contains various article objects"
+Feed o-- Article
+
+'-----------------------------
+' 11. FeedCriteria
+'-----------------------------
+class FeedCriteria {
+  - String feedUrl
+  - boolean withUserSubscription
+
+  + String getFeedUrl()
+  + FeedCriteria setFeedUrl(String feedUrl)
+  + boolean isWithUserSubscription()
+  + FeedCriteria setWithUserSubscription(boolean val)
+}
+' text: "Associations: none"
+
+'-----------------------------
+' 12. FeedSubscriptionDto
+'-----------------------------
+class FeedSubscriptionDto {
+  - String id
+  - String feedSubscriptionTitle
+  - String feedTitle
+  - String userId
+  - String feedId
+  - String feedRssUrl
+  - String feedUrl
+  - String feedDescription
+  - Integer unreadUserArticleCount
+  - Integer synchronizationFailCount
+  - Date createDate
+  - String categoryId
+  - String categoryParentId
+  - String categoryName
+  - boolean categoryFolded
+
+  + String getId()
+  + void setId(String id)
+  + String getFeedSubscriptionTitle()
+  + void setFeedSubscriptionTitle(String title)
+  + String getFeedTitle()
+  + void setFeedTitle(String feedTitle)
+  + String getUserId()
+  + void setUserId(String userId)
+  + String getFeedId()
+  + void setFeedId(String feedId)
+  + String getFeedRssUrl()
+  + void setFeedRssUrl(String feedRssUrl)
+  + String getFeedUrl()
+  + void setFeedUrl(String feedUrl)
+  + String getFeedDescription()
+  + void setFeedDescription(String feedDescription)
+  + Integer getUnreadUserArticleCount()
+  + void setUnreadUserArticleCount(Integer count)
+  + Integer getSynchronizationFailCount()
+  + void setSynchronizationFailCount(Integer count)
+  + Date getCreateDate()
+  + void setCreateDate(Date createDate)
+  + String getCategoryId()
+  + void setCategoryId(String categoryId)
+  + String getCategoryParentId()
+  + void setCategoryParentId(String parentId)
+  + String getCategoryName()
+  + void setCategoryName(String categoryName)
+  + boolean isCategoryFolded()
+  + void setCategoryFolded(boolean folded)
+}
+' "Associations: none"
+
+'-----------------------------
+' 13. FeedDto
+'-----------------------------
+class FeedDto {
+  - String id
+  - String rssUrl
+
+  + String getId()
+  + void setId(String id)
+  + String getRssUrl()
+  + void setRssUrl(String url)
+}
+' "Associations: none"
+
+'-----------------------------
+' 14. FeedMapper
+'-----------------------------
+class FeedMapper {
+  - FeedDto dto
+  - int i
+
+  + FeedDto map(Object[] o)
+}
+' Inheritance: Parent Class = ResultMapper<FeedDto>
+FeedMapper --|> ResultMapper
+' Dependency: FeedDto
+FeedMapper ..> FeedDto
+
+'-----------------------------
+' 15. ArticleResource
+'-----------------------------
+class ArticleResource {
+  + void read(String id)
+  + void readMultiple(List<String> idList)
+  + void unread(String id)
+  + void unreadMultiple(List<String> idList)
+}
+' Inheritance: Parent = BaseResource
+ArticleResource --|> BaseResource
+' Dependencies (from text):
+ArticleResource ..> UserArticleDao
+ArticleResource ..> ArticleDao
+ArticleResource ..> FeedSubscriptionDao
+ArticleResource ..> ArticleDto
+ArticleResource ..> FeedSubscriptionDto
+ArticleResource ..> ArticleCriteria
+ArticleResource ..> FeedSubscriptionCriteria
+
+'-----------------------------
+' 16. ArticleSanitizer
+'-----------------------------
+class ArticleSanitizer {
+  - Logger log
+  - AttributePolicy INTEGER_POLICY
+
+  + String sanitize(String baseUri, String html)
+}
+' text says "Associations: depends on UrlUtil," "Inheritance: none"
+ArticleSanitizer ..> UrlUtil
+
+'-----------------------------
+' 17. ArticleMapper
+'-----------------------------
+class ArticleMapper {
+  - ArticleDto dto
+  - int i
+
+  + ArticleDto map(Object[] o)
+}
+' Inheritance: Parent = ResultMapper<ArticleDto>
+ArticleMapper --|> ResultMapper
+' Dependency: ArticleDto
+ArticleMapper ..> ArticleDto
+
+'-----------------------------
+' 18. Article
+'-----------------------------
+class Article {
+  - String id
+  - String feedId
+  - String url
+  - String baseUri
+  - String guid
+  - String title
+  - String creator
+  - String description
+  - String commentUrl
+  - String commentCount
+  - String enclosureUrl
+  - int enclosureLength
+  - String enclosureType
+  - Date publicationDate
+  - Date createDate
+  - Date deleteDate
+
+  + String getId()
+  + void setId(String id)
+  + String getFeedId()
+  + void setFeedId(String feedId)
+  + String getUrl()
+  + void setUrl(String url)
+  + String getBaseUri()
+  + void setBaseUri(String baseUri)
+  + String getGuid()
+  + void setGuid(String guid)
+  + String getTitle()
+  + void setTitle(String title)
+  + String getCreator()
+  + void setCreator(String creator)
+  + String getDescription()
+  + void setDescription(String description)
+  + String getCommentUrl()
+  + void setCommentUrl(String commentUrl)
+  + Integer getCommentCount()
+  + void setCommentCount(Integer commentCount)
+  + Date getPublicationDate()
+  + void setPublicationDate(Date publicationDate)
+  + Date getCreateDate()
+  + void setCreateDate(Date createDate)
+  + Date getDeleteDate()
+  + void setDeleteDate(Date deleteDate)
+  + String toString()
+}
+' From text: "Associations: none"
+
+'-----------------------------
+' 19. ArticleDao
+'-----------------------------
+class ArticleDao {
+  + String create(Article article)
+  + Article update(Article article)
+  + List<Article> findAll()
+  + void delete(String id)
+  # QueryParam getQueryParam(ArticleCriteria criteria, FilterCriteria filterCriteria)
+}
+' Inheritance: Parent = BaseDao<ArticleDto, ArticleCriteria>
+ArticleDao --|> BaseDao
+
+' Dependencies: QueryParam, SortCriteria, ArticleMapper, ArticleCriteria, FilterCriteria
+ArticleDao ..> QueryParam
+ArticleDao ..> SortCriteria
+ArticleDao ..> ArticleMapper
+ArticleDao ..> ArticleCriteria
+ArticleDao ..> FilterCriteria
+
+' Aggregation: Article
+ArticleDao o-- Article
+
+' Composition: EntityManager
+ArticleDao *-- EntityManager
+
+'-----------------------------
+' 20. ArticleDto
+'-----------------------------
+class ArticleDto {
+  - String id
+  - String url
+  - String guid
+  - String title
+  - String creator
+  - String description
+  - String commentUrl
+  - Integer commentCount
+  - String enclosureUrl
+  - Integer enclosureCount
+  - String enclosureType
+  - Date publicationDate
+  - Date createDate
+  - String feedId
+
+  + String getId()
+  + void setId(String id)
+  + String getUrl()
+  + void setUrl(String url)
+  + String getGuid()
+  + void setGuid(String guid)
+  + String getTitle()
+  + void setTitle(String title)
+  + String getCreator()
+  + void setCreator(String creator)
+  + String getDescription()
+  + void setDescription(String desc)
+  + String getCommentUrl()
+  + void setCommentUrl(String url)
+  + Integer getCommentCount()
+  + void setCommentCount(Integer count)
+  + Date getPublicationDate()
+  + void setPublicationDate(Date date)
+  + Date getCreateDate()
+  + void setCreateDate(Date date)
+  + String getEnclosureUrl()
+  + void setEnclosureUrl(String url)
+  + Integer getEnclosureCount()
+  + void setEnclosureCount(Integer cnt)
+  + String getEnclosureType()
+  + void setEnclosureType(String type)
+  + String getFeedId()
+  + void setFeedId(String feedId)
+}
+' "Associations: none"
+
+'-----------------------------
+' 21. ArticleDeletedAsyncEvent
+'-----------------------------
+class ArticleDeletedAsyncEvent {
+  - List<Article> articleList
+
+  + List<Article> getArticleList()
+  + void setArticleList(List<Article> articleList)
+  + String toString()
+}
+' Inheritance: none
+' Associations: "Dependency: Article"
+ArticleDeletedAsyncEvent ..> Article
+
+'-----------------------------
+' 22. ArticleUpdatedAsyncEvent
+'-----------------------------
+class ArticleUpdatedAsyncEvent {
+  - List<Article> articleList
+
+  + List<Article> getArticleList()
+  + void setArticleList(List<Article> articleList)
+  + String toString()
+}
+' "Dependency: Article"
+ArticleUpdatedAsyncEvent ..> Article
+
+'-----------------------------
+' 23. ArticleDeletedAsyncListener
+'-----------------------------
+class ArticleDeletedAsyncListener {
+  - static final Logger log
+
+  + void onArticleDeleted(ArticleDeletedAsyncEvent) throws Exception
+}
+' "Associations - Dependency: ArticleDeletedAsyncEvent, Aggregation: ArticleDao"
+ArticleDeletedAsyncListener ..> ArticleDeletedAsyncEvent
+ArticleDeletedAsyncListener o-- ArticleDao
+
+'-----------------------------
+' 24. ArticleUpdatedAsyncListener
+'-----------------------------
+class ArticleUpdatedAsyncListener {
+  - static final Logger log
+
+  + void onArticleUpdated(ArticleUpdatedAsyncEvent)
+}
+' "Associations - Dependency: ArticleUpdatedAsyncEvent, ArticleDao, Logger"
+ArticleUpdatedAsyncListener ..> ArticleUpdatedAsyncEvent
+ArticleUpdatedAsyncListener ..> ArticleDao
+ArticleUpdatedAsyncListener ..> Logger
+
+'-----------------------------
+' 25. ArticleCriteria
+'-----------------------------
+class ArticleCriteria {
+  - String id
+  - List<String> guidIn
+  - String title
+  - String url
+  - Date publicationDateMin
+  - String feedId
+
+  + String getId()
+  + ArticleCriteria setId(String id)
+  + List<String> getGuidIn()
+  + ArticleCriteria setGuidIn(List guidIn)
+  + String getTitle()
+  + ArticleCriteria setTitle(String title)
+  + String getUrl()
+  + ArticleCriteria setUrl(String url)
+  + Date getPublicationDateMin()
+  + ArticleCriteria setPublicationDateMin(Date date)
+  + String getFeedId()
+  + ArticleCriteria setFeedId(String feedId)
+}
+' "Associations: NA"
+
+'-----------------------------
+' 26. ArticleCreatedAsyncEvent
+'-----------------------------
+class ArticleCreatedAsyncEvent {
+  - List<Article> articleList
+
+  + List<Article> getArticleList()
+  + void setArticleList(List<Article> articleList)
+  + String toString()
+}
+' "Composition: The event contains a list of Article"
+ArticleCreatedAsyncEvent *-- Article
+
+'-----------------------------
+' 27. ArticleCreatedAsyncListener
+'-----------------------------
+class ArticleCreatedAsyncListener {
+  - static final Logger log
+
+  + void onArticleCreated(ArticleCreatedAsyncEvent)
+}
+' "Associations - Dependency: ArticleCreatedAsyncEvent, Aggregation: ArticleDao"
+ArticleCreatedAsyncListener ..> ArticleCreatedAsyncEvent
+ArticleCreatedAsyncListener o-- ArticleDao
+
+'-----------------------------
+' 28. SubscriptionImportedEvent
+'-----------------------------
+class SubscriptionImportedEvent {
+  - User user
+  - File importFile
+
+  + User getUser()
+  + void setUser(User user)
+  + File getImportFile()
+  + void setImportFile(File importFile)
+  + String toString()
+}
+' "Associations - Dependency: User, File"
+
+'-----------------------------
+' 29. SubscriptionImportAsyncListener
+'-----------------------------
+class SubscriptionImportAsyncListener {
+  - static final Logger log
+  - static final String FILE_STARRED_JSON
+  - static final String FILE_SUBSCRIPTIONS_XML
+
+  + void onSubscriptionImport(SubscriptionImportedEvent)
+  - Job createJob(User user, File importFile)
+  - long getFeedCount(List<Outline> outlineList)
+  - void processImportFile(User user, File importFile, Job job)
+  - void importOutline(User user, List<Outline> outlineList, Job job)
+  - void importFeedFromStarred(User user, Feed feed, Article article)
+}
+' text says:
+' Composition: FeedSubscription, UserArticle, JobEvent
+SubscriptionImportAsyncListener *-- FeedSubscription
+SubscriptionImportAsyncListener *-- UserArticle
+SubscriptionImportAsyncListener *-- JobEvent
+
+' Aggregation: User, FeedSubscriptionDao, JobDao, JobEventDao, ArticleDao, UserArticleDao, FeedService
+SubscriptionImportAsyncListener o-- User
+SubscriptionImportAsyncListener o-- FeedSubscriptionDao
+SubscriptionImportAsyncListener o-- JobDao
+SubscriptionImportAsyncListener o-- JobEventDao
+SubscriptionImportAsyncListener o-- ArticleDao
+SubscriptionImportAsyncListener o-- UserArticleDao
+SubscriptionImportAsyncListener o-- FeedService
+
+' Dependency: SubscriptionImportedEvent, OpmlReader, OpmlFlattener, CategoryDao,
+' EntityManagerUtil, TransactionUtil, MimeTypeUtil, StarredReader, ArticleCreatedAsyncEvent
+SubscriptionImportAsyncListener ..> SubscriptionImportedEvent
+SubscriptionImportAsyncListener ..> OpmlReader
+SubscriptionImportAsyncListener ..> OpmlFlattener
+SubscriptionImportAsyncListener ..> CategoryDao
+SubscriptionImportAsyncListener ..> EntityManagerUtil
+SubscriptionImportAsyncListener ..> TransactionUtil
+SubscriptionImportAsyncListener ..> MimeTypeUtil
+SubscriptionImportAsyncListener ..> StarredReader
+SubscriptionImportAsyncListener ..> ArticleCreatedAsyncEvent
+
+'-----------------------------
+' 30. SubscriptionParser
+'-----------------------------
+class SubscriptionParser {
+  - static final String SUBSCRIPTION
+  - static final String TITLE
+  - static final String SPECIALIZATION
+  - static final String URL
+  - static final String HOMEPAGE
+  - static final String PREFIXES
+  - static final String AUTHOR
+  - List<Subscription> subscriptions
+  - Subscription currentSubscription
+
+  + SubscriptionParser(List<Subscription> subscriptions)
+  + void startElement(String uri, String localName, String qName, Attributes attributes)
+  + void endElement(String uri, String localName, String qName)
+}
+' Inheritance: DefaultHandler
+SubscriptionParser --|> DefaultHandler
+' Dependency: Subscription
+
+SubscriptionParser ..> Subscription
+
+'-----------------------------
+' 31. Subscription
+'-----------------------------
+class Subscription {
+  + String title
+  + String specialization
+  + String url
+  + String homepage
+  + String[] prefixes
+  + String author
+}
+' "Associations: NA"
+
+'-----------------------------
+' 32. OpmlFlattener
+'-----------------------------
+class OpmlFlattener {
+  + static Map<String,List<Outline>> flatten(List<Outline> outlineList)
+  - static void flatten(List<Outline> outlineTree, Map<String,List<Outline>> outlineMap, String prefix)
+  - static String getPrefix(Outline outline, String prefix)
+}
+' Dependencies: Outline
+OpmlFlattener ..> Outline
+
+'-----------------------------
+' 33. OpmlReader
+'-----------------------------
+class OpmlReader {
+  - Logger log
+  - String content
+  - Outline rootOutline
+  - Outline currentOutline
+  - Element currentElement
+  - Stack<Element> elementStack
+  - Stack<Outline> outlineStack
+
+  + OpmlReader()
+  + void read(InputStream is)
+  + void startElement(String uri, String localName, String qName, Attributes attributes)
+  + void endElement(String uri, String localName, String qName)
+  + void characters(char[] ch, int start, int length)
+  + List<Outline> getOutlineList()
+  - void pushElement(Element newElement)
+  - void popElement()
+}
+' Inheritance: DefaultHandler
+OpmlReader --|> DefaultHandler
+' Aggregation: Outline (OpmlReader constructs a tree of Outline)
+OpmlReader o-- Outline
+' Dependencies: SAXParser, SAXParserFactory, Logger
+OpmlReader ..> SAXParser
+OpmlReader ..> SAXParserFactory
+OpmlReader ..> Logger
+
+'-----------------------------
+' 34. RssReader
+'-----------------------------
+class RssReader {
+  + static final DateTimeFormatter DF_RSS
+  + static final DateTimeFormatter DF_ATOM
+  + static final DateTimeFormatter DF_DC
+
+  - String content
+  - Feed feed
+  - Article article
+  - List<Article> articleList
+  - List<AtomLink> atomLinkList
+  - List<AtomLink> atomArticleLinkList
+  - int fatalErrorCount
+  - Element currentElement
+  - Stack<Element> elementStack
+  - FeedType feedType
+
+  + RssReader()
+  + void readRssFeed(InputStream is)
+  + void startElement(String uri, String localName, String qName, Attributes attributes)
+  + void endElement(String uri, String localName, String qName)
+  + void characters(char[] ch, int start, int length)
+  + void fatalError(SAXParseException e)
+  + Feed getFeed()
+  + List<Article> getArticleList()
+  - void validateFeed()
+  - void fixGuid()
+  - void initFeed()
+  - void pushElement(Element newElement)
+  - void popElement()
+  - String getContent()
+}
+' Inheritance: DefaultHandler
+RssReader --|> DefaultHandler
+' Aggregation: AtomLink, Feed, Article
+RssReader o-- AtomLink
+RssReader o-- Feed
+RssReader o-- Article
+' Dependencies: StreamUtil, DateUtil, UrlUtil
+RssReader ..> StreamUtil
+RssReader ..> DateUtil
+RssReader ..> UrlUtil
+
+'-----------------------------
+' 35. RssExtractor
+'-----------------------------
+class RssExtractor {
+  - static final Logger log
+  - final URL url
+  - List<String> feedlist
+
+  + RssExtractor(String url)
+  + void readPage(InputStream is)
+  + void startElement(String uri, String localName, String qName, Attributes attributes)
+  + List<String> getFeedList()
+}
+' Inheritance: DefaultHandler
+RssExtractor --|> DefaultHandler
+' Dependencies: UrlUtil
+
+RssExtractor ..> UrlUtil
+
+'-----------------------------
+' 36. XmlReader
+'-----------------------------
+class XmlReader {
+  - static final int HEADER_SIZE
+  - InputStreamReader internalInputStreamReader
+
+  + XmlReader(InputStream in, String defaultEnc)
+  + void close()
+  + int read(char[] cbuf, int off, int len)
+}
+' Inheritance: Reader
+XmlReader --|> Reader
+' Composition: InputStreamReader
+XmlReader *-- InputStreamReader
+' Dependencies: PushbackInputStream, ByteStreams, Pattern, Matcher
+
+XmlReader ..> PushbackInputStream
+XmlReader ..> ByteStreams
+XmlReader ..> Pattern
+XmlReader ..> Matcher
+
+'-----------------------------
+' 37. AtomArticleCommentUrlGuesserStrategy
+'-----------------------------
+class AtomArticleCommentUrlGuesserStrategy {
+  + String guess(List<AtomLink> atomLinkList)
+}
+' Dependency: AtomLink
+AtomArticleCommentUrlGuesserStrategy ..> AtomLink
+
+'-----------------------------
+' 38. AtomLink
+'-----------------------------
+class AtomLink {
+  - String rel
+  - String type
+  - String href
+
+  + AtomLink(String rel, String type, String href)
+  + String getRel()
+  + void setRel(String rel)
+  + String getHref()
+  + void setHref(String href)
+  + String getType()
+  + void setType(String type)
+}
+
+'-----------------------------
+' 39. AtomUrlGuesserStrategy
+'-----------------------------
+class AtomUrlGuesserStrategy {
+  + String guessSiteUrl(List<AtomLink> atomLinkList)
+  + String guessFeedUrl(List<AtomLink> atomLinkList)
+}
+' Dependency: AtomLink
+AtomUrlGuesserStrategy ..> AtomLink
+
+'-----------------------------
+' 40. AtomArticleUrlGuesserStrategy
+'-----------------------------
+class AtomArticleUrlGuesserStrategy {
+  + String guess(List<AtomLink> atomLinkList)
+}
+' Dependency: AtomLink
+AtomArticleUrlGuesserStrategy ..> AtomLink
+
+'-----------------------------
+' 41. FaviconUpdateRequestedAsyncListener
+'-----------------------------
+class FaviconUpdateRequestedAsyncListener {
+  - static final Logger log
+
+  + void onFaviconUpdateRequested(FaviconUpdateRequestedEvent event)
+  - static void handle(Runnable task)  'TransactionUtil.handle() from text
+}
+' Dependencies: FaviconUpdateRequestedEvent, Feed, DirectoryUtil, TransactionUtil
+FaviconUpdateRequestedAsyncListener ..> FaviconUpdateRequestedEvent
+FaviconUpdateRequestedAsyncListener ..> Feed
+FaviconUpdateRequestedAsyncListener ..> DirectoryUtil
+FaviconUpdateRequestedAsyncListener ..> TransactionUtil
+' Aggregation: FaviconDownloader
+FaviconUpdateRequestedAsyncListener o-- FaviconDownloader
+
+'-----------------------------
+' 42. FaviconDownloader
+'-----------------------------
+class FaviconDownloader {
+  - static final Logger log
+  + final ImmutableMap<String,String> FAVICON_MIME_TYPE_MAP
+
+  + String downloadFaviconFromPage(String pageUrl, String directory, String fileName)
+  + String getFaviconUrl(String pageUrl, String fileName)
+  + String downloadFavicon(String faviconUrl, String directory, String fileName)
+}
+' Dependencies: ReaderHttpClient, FaviconExtractor, MimeTypeUtil, LoggerFactory
+
+FaviconDownloader ..> ReaderHttpClient
+FaviconDownloader ..> FaviconExtractor
+FaviconDownloader ..> MimeTypeUtil
+FaviconDownloader ..> LoggerFactory
+
+'-----------------------------
+' 43. FaviconExtractor
+'-----------------------------
+class FaviconExtractor {
+  - static final Logger log
+  - final URL url
+  - String favicon
+
+  + FaviconExtractor(String url)
+  + void readPage(InputStream is)
+  + void startElement(String uri, String localName, String qName, Attributes attributes)
+  + String getFavicon()
+}
+' Inheritance: DefaultHandler
+FaviconExtractor --|> DefaultHandler
+' Dependencies: StringUtils, Logger
+
+FaviconExtractor ..> StringUtils
+FaviconExtractor ..> Logger
+
+'-----------------------------
+' 44. FaviconUpdateRequestedEvent
+'-----------------------------
+class FaviconUpdateRequestedEvent {
+  - Feed feed
+
+  + Feed getFeed()
+  + void setFeed(Feed feed)
+  + String toString()
+}
+' Dependency on Feed
+FaviconUpdateRequestedEvent ..> Feed
+
+'-----------------------------
+' 45. MimeTypeUtil
+'-----------------------------
+class MimeTypeUtil {
+  + static String guessMimeType(File file) throws Exception
+}
+' Dependency: MimeType
+MimeTypeUtil ..> MimeType
+
+'-----------------------------
+' 46. TextSanitizer
+'-----------------------------
+class TextSanitizer {
+  - static final PolicyFactory policy
+  - static final Pattern TAG_PATTERN
+
+  + static String sanitize(String html)
+}
+' text says "Associations: depends on HtmlPolicyBuilder, PolicyFactory, Pattern"
+TextSanitizer ..> HtmlPolicyBuilder
+TextSanitizer ..> PolicyFactory
+TextSanitizer ..> Pattern
+
+'-----------------------------
+' 47. StreamUtil
+'-----------------------------
+class StreamUtil {
+  + static InputStream detectGzip(InputStream is) throws IOException
+}
+' no direct relationships from text except uses InputStream, PushbackInputStream, GZIPInputStream
+StreamUtil ..> InputStream
+StreamUtil ..> PushbackInputStream
+StreamUtil ..> GZIPInputStream
+
+'-----------------------------
+' 48. Outline
+'-----------------------------
+class Outline {
+  - String text
+  - String title
+  - String type
+  - String xmlUrl
+  - String htmlUrl
+  - List<Outline> outlineList
+
+  + Outline()
+  + String getText()
+  + void setText(String text)
+  + String getTitle()
+  + void setTitle(String title)
+  + String getType()
+  + void setType(String type)
+  + String getXmlUrl()
+  + void setXmlUrl(String xmlUrl)
+  + String getHtmlUrl()
+  + void setHtmlUrl(String htmlUrl)
+  + List<Outline> getOutlineList()
+}
+' Composition: Outline "1" *-- "many" Outline
+
+Outline "1" *-- "many" Outline : contains
+
+'-----------------------------
+' 49. MimeType
+'-----------------------------
+class MimeType {
+  {static} +IMAGE_X_ICON : String = \"image/x-icon\"
+  {static} +IMAGE_PNG : String = \"image/png\"
+  {static} +IMAGE_JPEG : String = \"image/jpeg\"
+  {static} +IMAGE_GIF : String = \"image/gif\"
+  {static} +APPLICATION_ZIP : String = \"application/zip\"
+}
+
+'-----------------------------
+' Extra: GuidFixer is also in the text
+' (Though that might make 50 classes. The user said 49 total, but GuidFixer was also listed.)
+' We'll include it, as it is in the text.
+
+class GuidFixer {
+  + static void fixGuid(Article article)
+}
+' Dependencies: Article, StringUtils
+GuidFixer ..> Article
+GuidFixer ..> StringUtils
+
+'-----------------------------
+' Common CLasses
+'-----------------------------
+
+' 1) JsonUtil
+class JsonUtil {
+  
+  
+
+  
+  + append(o : JSONObject, key : String, value : JSONObject) : JSONObject
+}
+
+' 2) DialectUtil
+class DialectUtil {
+  
+  
+
+  
+  + isObjectNotFound(message : String) : boolean
+  + transform(sql : String) : String
+  + transformToPostgresql(sql : String) : String
+  + getDateDiff(field : String, diff : String, unit : String) : String
+  + getTimeStamp(value : String) : String
+  + getNullParameter(parameterName : String, value : Object) : String
+}
+
+' 3) NetworkUtil
+class NetworkUtil {
+  
+  - log : Logger
+
+  
+  + mapTcpPort(port : int) : boolean
+}
+
+' 4) JsonValidationUtil
+class JsonValidationUtil {
+  
+  
+
+  
+  + validateJsonRequired(n : JsonNode, name : String) : void
+  + validateJsonObject(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonNumber(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonLong(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonString(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonArray(n : JsonNode, name : String, required : boolean) : void
+}
+
+' 5) AppContext
+class AppContext {
+  
+  - static instance : AppContext
+  - eventBus : EventBus
+  - asyncEventBus : EventBus
+  - mailEventBus : EventBus
+  - importEventBus : EventBus
+  - feedService : FeedService
+  - indexingService : IndexingService
+  - asyncExecutorList : List<ExecutorService>
+
+  
+  - AppContext()
+  + static getInstance() : AppContext
+  - resetEventBus() : void
+  - newAsyncEventBus() : EventBus
+  + waitForAsync() : void
+  + getEventBus() : EventBus
+  + getAsyncEventBus() : EventBus
+  + getMailEventBus() : EventBus
+  + getImportEventBus() : EventBus
+  + getFeedService() : FeedService
+  + getIndexingService() : IndexingService
+}
+
+' 6) ReaderAgent
+class ReaderAgent {
+  
+  - listeners : List<DeploymentStatusListener>
+  - trayController : TrayController
+  - frame : AgentFrame
+  - elevated : boolean
+  - readerDeployer : ReaderDeployer
+  - setting : Setting
+
+  
+  + ReaderAgent()
+  + notifyDeploymentInfo() : void
+  - setLookAndFeel() : void
+  + checkElevation(args : String...) : void
+  - isElevationNeeded() : boolean
+  + addListener(listener : DeploymentStatusListener) : void
+  + showStatusPanel() : void
+  + showTrayIconMessage() : void
+  + exit() : void
+  + openBrowser() : void
+  - start(args : List<String>) : void
+  + static main(args : String[]) : void
+  + getReaderDeployer() : ReaderDeployer
+  - isElevated() : boolean
+  + getSetting() : Setting
+}
+
+' 7) ReaderDeployer
+class ReaderDeployer {
+  
+  - static final READER_WAR : String
+  - startTime : Date
+  - server : Server
+  - readerAgent : ReaderAgent
+  - exception : Exception
+  - serverState : ServerState
+
+  
+  + ReaderDeployer(readerAgent : ReaderAgent)
+  + start() : void
+  + stop() : void
+  + getErrorMessage() : String
+  + getMemoryUsed() : int
+  + getUrl() : String
+  + getDeploymentStatus() : DeploymentStatus
+  + lifeCycleStarting(event : LifeCycle) : void
+  + lifeCycleStarted(event : LifeCycle) : void
+  + lifeCycleStopping(event : LifeCycle) : void
+  + lifeCycleStopped(event : LifeCycle) : void
+  + lifeCycleFailure(event : LifeCycle, cause : Throwable) : void
+}
+
+' 8) AgentFrame
+class AgentFrame {
+  
+  - static final serialVersionUID : long
+  - final statusPanel : StatusPanel
+  - final settingPanel : SettingPanel
+  - tabbedPane : JTabbedPane
+  - closeButton : JButton
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + AgentFrame(readerAgent : ReaderAgent)
+  + centerComponent() : void
+  - initComponent() : void
+  + showStatusPanel() : void
+  + showSettingPanel() : void
+  - setIcon(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 9) TrayController
+class TrayController {
+  
+  - readerAgent : ReaderAgent
+  - trayIcon : TrayIcon
+  - openAction : Action
+  - controlPanelAction : Action
+  - hideAction : Action
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + TrayController(readerAgent : ReaderAgent)
+  + showMessage() : void
+  - createImage(resourceName : String) : Image
+  - createMenuItem(action : Action) : MenuItem
+  + uninstallComponents() : void
+  - setTrayImage(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 10) IndexingService
+class IndexingService {
+  
+  - static log : Logger
+  - directory : Directory
+  - directoryReader : DirectoryReader
+  - luceneStorageConfig : String
+
+  
+  # startUp() : void
+  # shutDown() : void
+  # runOneIteration() : void
+  # scheduler() : Scheduler
+  + searchArticles(userId : String, searchQuery : String, offset : Integer, limit : Integer) : PaginatedList<UserArticleDto>
+  + rebuildIndex() : void
+  + getDirectory() : Directory
+  + getDirectoryReader() : DirectoryReader
+}
+
+' 11) RebuildIndexAsyncEvent
+class RebuildIndexAsyncEvent {
+  
+  
+
+  
+  + toString() : String
+}
+
+' 12) RebuildIndexAsyncListener
+class RebuildIndexAsyncListener {
+  
+  - static final log : Logger
+
+  
+  + onArticleCreated(rebuildIndexAsyncEvent : RebuildIndexAsyncEvent) : void
+}
+
+' 13) SortCriteria
+class SortCriteria {
+  
+  - column : int
+  - asc : boolean
+  - sortQuery : String
+
+  
+  + SortCriteria(sortQuery : String)
+  + SortCriteria(column : Integer, asc : Boolean)
+  + getSortQuery() : String
+  + getColumn() : int
+  + isAsc() : boolean
+}
+
+' 14) QueryParam
+class QueryParam {
+  
+  - queryString : String
+  - criteriaList : List<String>
+  - parameterMap : Map<String, Object>
+  - sortCriteria : SortCriteria
+  - filterCriteria : FilterCriteria
+  - groupByList : List<String>
+  - resultMapper : ResultMapper
+
+  
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, groupByList : List<String>, resultMapper : ResultMapper)
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, resultMapper : ResultMapper)
+  + getQueryString() : String
+  + setQueryString(queryString : String) : void
+  + getSortCriteria() : SortCriteria
+  + setSortCriteria(sortCriteria : SortCriteria) : void
+  + getCriteriaList() : List<String>
+  + getParameterMap() : Map<String, Object>
+  + getFilterCriteria() : FilterCriteria
+  + getGroupByList() : List<String>
+  + getResultMapper() : ResultMapper
+}
+
+' 15) FilterCriteria
+class FilterCriteria {
+  
+  - filterColumnList : List<FilterColumn>
+
+  
+  + FilterCriteria(filterColumnList : List<FilterColumn>)
+  + getFilterColumnList() : List<FilterColumn>
+}
+
+' 16) FilterColumn
+class FilterColumn {
+  
+  # column : String
+  # filter : String
+
+  
+  + FilterColumn(column : String, filter : String)
+  + getColumn() : String
+  + getFilter() : String
+  + getPredicate() : String
+  + getParamValue() : Object
+  + getParamName() : String
+  + hasParam() : boolean
+}
+
+' 17) SearchResource
+class SearchResource {
+  
+  
+
+  
+  + get(query : String, limit : Integer, offset : Integer)
+}
+
+' 18) PaginatedLists
+class PaginatedLists {
+  
+  - DEFAULT_PAGE_SIZE : int
+  - MAX_PAGE_SIZE : int
+
+  
+  + create(pageSize : Integer, offset : Integer) : PaginatedList<E>
+  + create() : PaginatedList<E>
+  + executeQuery(queryParam : QueryParam) : List<E>
+  + executePaginatedQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam, sortCriteria : SortCriteria) : void
+  - executeCountQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - executeResultQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - getQueryString(queryParam : QueryParam) : String
+  - getNativeCountQuery(queryParam : QueryParam) : String
+  - getOrderByClause(sortCriteria : SortCriteria) : String
+  - mapQueryParam(query : Query, queryParam : QueryParam) : void
+  - mapFilterColumn(query : Query, queryParam : QueryParam) : void
+}
+
+' 19) PaginatedList<T>
+class PaginatedList {
+  
+  - limit : int
+  - offset : int
+  - resultCount : int
+  - resultList : List<T>
+
+  
+  + PaginatedList(pageSize : int, offset : int)
+  + getResultCount() : int
+  + setResultCount(resultCount : int) : void
+  + getResultList() : List<T>
+  + setResultList(resultList : List<T>) : void
+  + getLimit() : int
+  + getOffset() : int
+}
+
+' 20) LuceneUtil
+class LuceneUtil {
+  
+  - static log : Logger
+
+  
+  + static handle(runnable : LuceneRunnable) : void
+}
+
+' 21) LogCriteria
+class LogCriteria {
+  
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + getLevel() : String
+  + setLevel(level : String) : LogCriteria
+  + getTag() : String
+  + setTag(tag : String) : LogCriteria
+  + getMessage() : String
+  + setMessage(message : String) : LogCriteria
+}
+
+' 22) LogEntry
+class LogEntry {
+  
+  - timestamp : long
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + LogEntry(timestamp : long, level : String, tag : String, message : String)
+  + getTimestamp() : long
+  + getLevel() : String
+  + getTag() : String
+  + getMessage() : String
+}
+
+' 23) MemoryAppender
+class MemoryAppender {
+  
+  - size : int
+  - logQueue : Queue<LogEntry>
+
+  
+  + requiresLayout() : boolean
+  + close() : void
+  + append(event : LoggingEvent) : void
+  - getLoggerName(event : LoggingEvent) : String
+  + getLogList() : Queue<LogEntry>
+  + setSize(size : int) : void
+  + find(criteria : LogCriteria, list : PaginatedList<LogEntry>) : void
+}
+
+' 24) DeadEventListener
+class DeadEventListener {
+  
+  - static final log : Logger
+
+  
+  + onDeadEvent(deadEvent : DeadEvent) : void
+}
+
+' 25) HttpUtil
+class HttpUtil {
+  
+  - static final log : Logger
+
+  
+  + static readUrlIntoString(url : URL) : String
+  + static postUrl(url : URL, data : String) : String
+}
+
+' 26) UrlUtil
+class UrlUtil {
+  
+  
+
+  
+  + static getBaseUri(feed : Feed, article : Article) : String
+  + static getBaseUri(urlString : String) : String
+  + static completeUrl(baseUrl : String, relativeUrl : String) : String
+}
+
+' 27) Helper
+class Helper {
+  
+  - static log : Logger
+  - js : JSEngine
+
+  
+  + Helper(js : JSEngine)
+  + log(msg : Object) : void
+  + load(path : String) : void
+  + fileExists(stringPath : String) : boolean
+  + canAutoupdate() : boolean
+  + timerTask(runnable : Runnable) : TimerTask
+}
+
+' 28) JSEngine
+class JSEngine {
+  
+  - engine : ScriptEngine
+
+  
+  + JSEngine()
+  + evaluate(script : String) : Object
+  + put(key : String, value : Object) : void
+}
+
+' 29) DbOpenHelper
+abstract class DbOpenHelper {
+  
+  - static log : Logger
+  - final connectionHelper : ConnectionHelper
+  - final sqlStatementLogger : SqlStatementLogger
+  - final exceptions : List<Exception>
+  - formatter : Formatter
+  - haltOnError : boolean
+  - stmt : Statement
+
+  
+  + DbOpenHelper(serviceRegistry : ServiceRegistry)
+  + open() : void
+  # executeAllScript(version : int) : void
+  - executeScript(inputScript : InputStream) : void
+  # abstract onCreate() : void
+  # abstract onUpgrade(oldVersion : int, newVersion : int) : void
+  + getExceptions() : List<?>
+  + setHaltOnError(haltOnError : boolean) : void
+  + setFormat(format : boolean) : void
+}
+
+' 30) ReaderHttpClient<T>
+abstract class ReaderHttpClient {
+  
+  - USER_AGENT : String
+  - sslSocketFactory : SSLSocketFactory
+  - timeout : int
+
+  
+  + open(url : URL) : T
+  - buildHttpConnection(url : URL) : HttpURLConnection
+  # abstract process(is : InputStream) : T
+  + setTimeout(timeout : int) : void
+}
+
+' 31) ReaderStandardAnalyzer
+class ReaderStandardAnalyzer {
+  
+  + static final DEFAULT_MAX_TOKEN_LENGTH : int
+  - maxTokenLength : int
+  + static final STOP_WORDS_SET : CharArraySet
+
+  
+  + ReaderStandardAnalyzer(matchVersion : Version, stopWords : CharArraySet)
+  + ReaderStandardAnalyzer(matchVersion : Version)
+  + ReaderStandardAnalyzer(matchVersion : Version, stopwords : Reader)
+  + setMaxTokenLength(length : int) : void
+  + getMaxTokenLength() : int
+  # createComponents(fieldName : String, reader : Reader) : TokenStreamComponents
+  # initReader(fieldName : String, reader : Reader) : Reader
+}
+
+' 32) AdblockUtil
+class AdblockUtil {
+  
+  - static final log : Logger
+  - subscriptions : List<Subscription>
+  - js : JSEngine
+  - interactive : boolean
+
+  
+  + start() : void
+  + getSubscriptions() : List<Subscription>
+  + getSubscription(url : String) : Subscription
+  + setSubscription(subscription : Subscription) : void
+  + refreshSubscription() : void
+  + offerSubscription() : Subscription
+  + verifySubscriptions() : boolean
+  + matches(url : String, query : String, reqHost : String, refHost : String, accept : String) : Boolean
+  + startInteractive() : void
+  + stopInteractive() : void
+  + checkLocalePrefixMatch(prefixes : String[]) : String
+}
+
+' 33) TextPlainMessageBodyWriter
+class TextPlainMessageBodyWriter {
+  
+  
+
+  
+  + isWriteable(type : Class<?>, genericType : Type, annotations : Annotation[], mediaType : MediaType) : boolean
+  + getSize(array : JSONObject, type : Class<?>, genericType : Type, annotations : Annotation[], mediaType : MediaType) : long
+  + writeTo(jsonObject : JSONObject, ...) : void
+}
+
+' 34) ArticleAssembler
+class ArticleAssembler {
+  
+  
+
+  
+  + static asJson(userArticle : UserArticleDto) : JSONObject
+}
+
+' 35) ResutMapper<T>
+abstract class ResutMapper {
+  
+  
+
+  
+  + abstract map(cols : Object[]) : T
+  + map(rows : List<Object[]>) : List<T>
+  - characterValue(o : Object) : Character
+  - characterValueAsString(o : Object) : String
+  - stringValue(o : Object) : String
+  - booleanValue(o : Object) : Boolean
+  - intValue(o : Object) : Integer
+  - longValue(o : Object) : Long
+  - floatValue(o : Object) : Float
+  - doubleValue(o : Object) : Double
+  - bigDecimalValue(o : Object) : BigDecimal
+  - dateValue(o : Object) : Date
+  - getString(clob : Clob) : String
+  - arrayValue(o : Object) : String
+}
+
+' 36) BaseDao
+abstract class BaseDao {
+  
+  
+
+  
+  + findByCriteria(list : PaginatedList<T>, criteria : C, sortCriteria : SortCriteria, filterCriteria : FilterCriteria) : void
+  + findByCriteria(criteria : C, sortCriteria : SortCriteria, filterCriteria : FilterCriteria) : List<T>
+  + findByCriteria(criteria : C) : List<T>
+  + findFirstByCriteria(criteria : C) : T
+  # abstract getQueryParam(criteria : C, filterCriteria : FilterCriteria) : QueryParam
+}
+
+' 37) ValidationUtil
+class ValidationUtil {
+  
+  - static EMAIL_PATTERN : Pattern
+  - static HTTP_URL_PATTERN : Pattern
+  - static ALPHANUMERIC_PATTERN : Pattern
+
+  
+  + static validateRequired(s : Object, name : String) : void
+  + static validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer, nullable : boolean) : String
+  + static validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer) : String
+  + static validateStringNotBlank(s : String, name : String) : String
+  + static validateEmail(s : String, name : String) : void
+  + static validateHttpUrl(s : String, name : String) : String
+  + static validateAlphanumeric(s : String, name : String) : void
+  + static validateDate(s : String, name : String, nullable : boolean) : Date
+}
+
+' 38) CategoryResource
+class CategoryResource {
+  
+  
+
+  
+  + list()
+  + get(id : String, unread : boolean, limit : Integer, afterArticle : String)
+  + add(name : String)
+  + delete(id : String)
+  + read(id : String)
+  + update(id : String, name : String, order : Integer, folded : Boolean)
+}
+
+' 39) CategoryDao
+class CategoryDao {
+  
+  - em : EntityManager
+
+  
+  + create(category : Category) : String
+  + update(category : Category) : Category
+  + reorder(category : Category, order : int) : void
+  + delete(id : String) : void
+  + getRootCategory(userId : String) : Category
+  + getCategory(id : String, userId : String) : Category
+  + getCategoryCount(parentId : String, userId : String) : int
+  + findAllCategory(userId : String) : List<Category>
+  + findSubCategory(parentId : String, userId : String) : List<Category>
+}
+
+' 40) Category
+class Category {
+  
+  - id : String
+  - userId : String
+  - parentId : String
+  - name : String
+  - order : Integer
+  - folded : boolean
+  - createDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getParentId() : String
+  + setParentId(parentId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getOrder() : Integer
+  + setOrder(order : Integer) : void
+  + isFolded() : boolean
+  + setFolded(folded : boolean) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 41) Config
+class Config {
+  
+  - id : ConfigType
+  - value : String
+
+  
+  + getId() : ConfigType
+  + setId(id : ConfigType) : void
+  + getValue() : String
+  + setValue(value : String) : void
+  + toString() : String
+}
+
+' 42) ConfigDao
+class ConfigDao {
+  
+  - em : EntityManager
+
+  
+  + getById(id : ConfigType) : Config
+}
+
+' 43) ConfigUtil
+class ConfigUtil {
+  
+  
+
+  
+  + static getConfigStringValue(configType : ConfigType) : String
+  + static getConfigBundle() : ResourceBundle
+  + static getConfigIntegerValue(configType : ConfigType) : int
+  + static getConfigBooleanValue(configType : ConfigType) : boolean
+}
+
+' 44) MessageUtil
+class MessageUtil {
+  
+  - static final locale : Locale
+
+  
+  + static getMessage(key : String, args : Object...) : String
+}
+
+' 45) EnvironmentUtil
+class EnvironmentUtil {
+  
+  - static OS : String
+  - static TEST_ENV : String
+  - static WINDOWS_APPDATA : String
+  - static MAC_OS_USER_HOME : String
+  - static READER_HOME : String
+  - static APPLICATION_LOG_ENABLED : String
+  - static SSL_TRUST_ALL : String
+  - static HIBERNATE_PROPERTIES : String
+  - static webappContext : boolean
+
+  
+  + static isWindows() : boolean
+  + static isMacOs() : boolean
+  + static isUnix() : boolean
+  + static isUnitTest() : boolean
+  + static getWindowsAppData() : String
+  + static getMacOsUserHome() : String
+  + static getReaderHome() : String
+  + static getHibernateProperties() : String
+  + static isApplicationLogEnabled() : boolean
+  + static isSslTrustAll() : boolean
+  + static isWebappContext() : boolean
+  + static setWebappContext(webappContext : boolean) : void
+}
+
+' 46) ResourceUtil
+class ResourceUtil {
+  
+  
+
+  
+  + static list(clazz : Class<?>, path : String, filter : FilenameFilter) : List<String>
+  + static list(clazz : Class<?>, path : String) : List<String>
+  + static loadPropertiesFromUrl(url : URL) : Map<Object, Object>
+}
+
+' 47) DirectoryUtil
+class DirectoryUtil {
+  
+  
+
+  
+  + static getBaseDataDirectory() : File
+  + static getDbDirectory() : File
+  + static getFaviconDirectory() : File
+  + static getLuceneDirectory() : File
+  + static getLogDirectory() : File
+  - static getDataSubDirectory(subdirectory : String) : File
+}
+
+' 48) SessionUtil
+class SessionUtil {
+  
+  
+
+  
+  + static getCurrentSession() : Session
+}
+
+' 49) ThreadLocalContext
+class ThreadLocalContext {
+  
+  + static threadLocalContext : ThreadLocal<ThreadLocalContext>
+  - entityManager : EntityManager
+
+  
+  + static get() : ThreadLocalContext
+  + static cleanup() : void
+  + isInTransactionalContext() : boolean
+  + getEntityManager() : EntityManager
+  + setEntityManager(entityManager : EntityManager) : void
+}
+
+' 50) AppResource
+class AppResource {
+  
+  
+
+  
+  + version()
+  + log()
+  + batchReindex()
+  + mapPort()
+}
+
+' 51) ForbiddenClientException
+class ForbiddenClientException {
+  
+  - static final serialVersionUID : long
+
+  
+  + ForbiddenClientException()
+}
+
+' 52) ClientException
+class ClientException {
+  
+  - static final serialVersionUID : long
+  - static final log : Logger
+
+  
+  + ClientException(type : String, message : String, e : Exception)
+  + ClientException(type : String, message : String)
+}
+
+' 53) ServerException
+class ServerException {
+  
+  - static final serialVersionUID : long
+  - static final log : Logger
+
+  
+  + ServerException(type : String, message : String, e : Exception)
+  + ServerException(type : String, message : String)
+}
+
+' 54) GenericExceptionMapper
+class GenericExceptionMapper {
+  
+  - static final log : Logger
+
+  
+  + toResponse(e : Exception) : Response
+}
+
+' 55) ManagedProviderConnectionHelper
+class ManagedProviderConnectionHelper {
+  
+  - cfgProperties : Properties
+  - serviceRegistry : StandardServiceRegistryImpl
+  - connection : Connection
+
+  
+  + ManagedProviderConnectionHelper(cfgProperties : Properties)
+  + prepare(needsAutoCommit : boolean) : void
+  - static createServiceRegistry(properties : Properties) : StandardServiceRegistryImpl
+  + getConnection() : Connection
+  + release() : void
+  - releaseConnection() : void
+  - releaseServiceRegistry() : void
+}
+
+' 56) SuppliedConnectionProviderConnectionHelper
+class SuppliedConnectionProviderConnectionHelper {
+  
+  - provider : ConnectionProvider
+  - connection : Connection
+  - toggleAutoCommit : boolean
+
+  
+  + SuppliedConnectionProviderConnectionHelper(provider : ConnectionProvider)
+  + prepare(needsAutoCommit : boolean) : void
+  + getConnection() : Connection
+  + release() : void
+}
+
+' 57) EntityManagerUtil
+class EntityManagerUtil {
+  
+  
+
+  
+  + static flush() : void
+}
+
+' 58) EMF
+class EMF {
+  
+  - static final log : Logger
+  - static properties : Map<Object, Object>
+  - static emfInstance : EntityManagerFactory
+
+  
+  - static getEntityManagerProperties() : Map<Object, Object>
+  - static getEntityManagerPropertiesFromEnvironment() : Map<Object, Object>
+  - EMF()
+  + static get() : EntityManagerFactory
+  + static isDriverHsql() : boolean
+  + static isDriverPostgresql() : boolean
+  + static getDriver() : String
+}
+
+' 59) DeploymentStatus
+class DeploymentStatus {
+  
+  - final serverState : ServerState
+  - final startTime : Date
+  - final url : String
+  - final memoryUsed : int
+  - final errorMessage : String
+
+  
+  + DeploymentStatus(serverState : ServerState, startTime : Date, url : String, memoryUsed : int, errorMessage : String)
+  + getServerState() : ServerState
+  + getStartTime() : Date
+  + getUrl() : String
+  + getMemoryUsed() : int
+  + getErrorMessage() : String
+}
+
+' 60) Constants
+class Constants {
+  
+  + static final REQUEST_CODE_ARTICLES : int
+  + static final REQUEST_CODE_MANAGE_CATEGORIES : int
+
+  
+  
+}
+
+' 61) DateUtil
+class DateUtil {
+  
+  - static final log : Logger
+  - static final TIMEZONE_CODE_MAP : ImmutableMap<String, String>
+
+  
+  + static guessTimezoneOffset(date : String) : String
+  + static parseDate(date : String, df : DateTimeFormatter) : Date
+}
+
+' 62) Setting
+class Setting {
+  
+  - static final READER_AGENT_PROPERTIES_FILE : String
+  + static final DEFAULT_HOST : String
+  + static final DEFAULT_PORT : int
+  + static final DEFAULT_CONTEXT_PATH : String
+  + static final DEFAULT_AUTO_START : boolean
+  + static final DEFAULT_SECURE : boolean
+  - host : String
+  - port : int
+  - contextPath : String
+  - readerHome : String
+  - autoStart : boolean
+  - secure : boolean
+  - keyStorePath : String
+  - keyStorePassword : String
+  - keyManagerPassword : String
+
+  
+  + Setting()
+  + read() : void
+  + save() : void
+  + getHost() : String
+  + setHost(host : String) : void
+  + getPort() : int
+  + setPort(port : int) : void
+  + getContextPath() : String
+  + setContextPath(contextPath : String) : void
+  + getReaderHome() : String
+  + setReaderHome(readerHome : String) : void
+  + isAutoStart() : boolean
+  + setAutoStart(autoStart : boolean) : void
+  + isSecure() : boolean
+  + setSecure(secure : boolean) : void
+  + getKeyStorePath() : String
+  + setKeyStorePath(keyStorePath : String) : void
+  + getKeyStorePassword() : String
+  + setKeyStorePassword(keyStorePassword : String) : void
+  + getKeyManagerPassword() : String
+  + setKeyManagerPassword(keyManagerPassword : String) : void
+}
+
+' 63) SettingPanel
+class SettingPanel {
+  
+  - static final serialVersionUID : long
+  - static final INTEGER_FORMAT : Format
+  - portTextField : JFormattedTextField
+  - contextPathComboBox : JComboBox<String>
+  - autoStartCheckBox : JCheckBox
+  - secureCheckBox : JCheckBox
+  - keyStorePathTextField : JFormattedTextField
+  - keyStorePasswordTextField : JFormattedTextField
+  - keyManagerPasswordTextField : JFormattedTextField
+  - defaultButton : JButton
+  - saveButton : JButton
+  - readerAgent : ReaderAgent
+
+  
+  + SettingPanel(readerAgent : ReaderAgent)
+  + readSetting() : void
+  + saveSetting() : void
+  - initComponent() : void
+  - getContextPath() : String
+  - getPort() : int
+  - getKeyStorePath() : String
+  - getKeyStorePassword() : String
+  - getKeyManagerPassword() : String
+}
+
+' 64) StatusPanel
+class StatusPanel {
+  
+  - static final serialVersionUID : long
+  - static final DATE_FORMAT : DateFormat
+  - final readerAgent : ReaderAgent
+  - statusTextField : JTextField
+  - startedTextField : JTextField
+  - memoryTextField : JTextField
+  - errorTextField : JTextArea
+  - startButton : JButton
+  - stopButton : JButton
+  - urlButton : JButton
+
+  
+  + StatusPanel(readerAgent : ReaderAgent)
+  - initComponent() : void
+  + notifyDeploymentStatus(status : DeploymentStatus) : void
+}
+
+' 65) Job
+class Job {
+  
+  - id : String
+  - userId : String
+  - name : String
+  - createDate : Date
+  - startDate : Date
+  - endDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getStartDate() : Date
+  + setStartDate(startDate : Date) : void
+  + getEndDate() : Date
+  + setEndDate(endDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 66) JobDao
+class JobDao {
+  
+  
+
+  
+  # getQueryParam(criteria : JobCriteria, filterCriteria : FilterCriteria) : QueryParam
+  + create(job : Job) : String
+  + getActiveJob(id : String) : Job
+  + delete(id : String) : void
+  + update(job : Job) : Job
+}
+
+' 67) JobDto
+class JobDto {
+  
+  - id : String
+  - name : String
+  - userId : String
+  - createTimestamp : Long
+  - startTimestamp : Long
+  - endTimestamp : Long
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getCreateTimestamp() : Long
+  + setCreateTimestamp(ts : Long) : void
+  + getStartTimestamp() : Long
+  + setStartTimestamp(ts : Long) : void
+  + getEndTimestamp() : Long
+  + setEndTimestamp(ts : Long) : void
+}
+
+' 68) JobEvent
+class JobEvent {
+  
+  - id : String
+  - jobId : String
+  - name : String
+  - value : String
+  - createDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getJobId() : String
+  + setJobId(jobId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getValue() : String
+  + setValue(value : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 69) JobEventCriteria
+class JobEventCriteria {
+  
+  - jobId : String
+
+  
+  + getJobId() : String
+  + setJobId(jobId : String) : JobEventCriteria
+}
+
+' 70) JobEventDao
+class JobEventDao {
+  
+  
+
+  
+  # getQueryParam(criteria : JobEventCriteria, filterCriteria : FilterCriteria) : QueryParam
+  + create(jobEvent : JobEvent) : String
+  + delete(id : String) : void
+}
+
+' 71) JobEventMapper
+class JobEventMapper {
+  
+  
+
+  
+  + map(o : Object[]) : JobEventDto
+}
+
+' 72) JobMapper
+class JobMapper {
+  
+  
+
+  
+  + map(o : Object[]) : JobDto
+}
+
+
+@enduml

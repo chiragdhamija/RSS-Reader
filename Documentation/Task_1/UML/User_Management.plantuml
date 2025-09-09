@@ -1,0 +1,1526 @@
+@startuml
+
+' =============================
+' USER CLASS
+' =============================
+class User {
+  - id : String
+  - localeId : String
+  - roleId : String
+  - username : String
+  - password : String
+  - email : String
+  - theme : String
+  - displayTitleWeb : boolean
+  - displayTitleMobile : boolean
+  - displayUnreadWeb : boolean
+  - displayUnreadMobile : boolean
+  - narrowArticle : boolean
+  - firstConnection : boolean
+  - createDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getLocaleId() : String
+  + setLocaleId(localeId : String) : void
+  + getRoleId() : String
+  + setRoleId(roleId : String) : void
+  + getUsername() : String
+  + setUsername(username : String) : void
+  + getPassword() : String
+  + setPassword(password : String) : void
+  + getEmail() : String
+  + setEmail(email : String) : void
+  + getTheme() : String
+  + setTheme(theme : String) : void
+  + isDisplayTitleWeb() : boolean
+  + setDisplayTitleWeb(displayTitleWeb : boolean) : void
+  + isDisplayTitleMobile() : boolean
+  + setDisplayTitleMobile(displayTitleMobile : boolean) : void
+  + isDisplayUnreadWeb() : boolean
+  + setDisplayUnreadWeb(displayUnreadWeb : boolean) : void
+  + isDisplayUnreadMobile() : boolean
+  + setDisplayUnreadMobile(displayUnreadMobile : boolean) : void
+  + isNarrowArticle() : boolean
+  + setNarrowArticle(narrowArticle : boolean) : void
+  + isFirstConnection() : boolean
+  + setFirstConnection(firstConnection : boolean) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+  + toString() : String
+}
+
+' =============================
+' USERDTO CLASS
+' =============================
+class UserDto {
+  - id : String
+  - localeId : String
+  - username : String
+  - email : String
+  - createTimestamp : Long
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getLocaleId() : String
+  + setLocaleId(localeId : String) : void
+  + getUsername() : String
+  + setUsername(username : String) : void
+  + getEmail() : String
+  + setEmail(email : String) : void
+  + getCreateTimestamp() : Long
+  + setCreateTimestamp(ts : Long) : void
+}
+
+' =============================
+' USERDAO CLASS
+' =============================
+class UserDao {
+  - criteriaList : List<String>
+  - parameterMap : Map<String, Object>
+  - sb : StringBuilder
+  --
+  # getQueryParam(criteria : UserCriteria, filterCriteria : FilterCriteria)
+  + authenticate(username : String, password : String) : String
+  + create(user : User) : String
+  + update(user : User) : User
+  + updatePassword(user : User) : User
+  + getById(id : String) : User
+  + getActiveByUsername(username : String) : User
+  + getActiveByPasswordResetKey(passwordResetKey : String) : User
+  + delete(username : String) : void
+  - hashPassword(password : String) : String
+}
+
+' =============================
+' USERMAPPER CLASS
+' =============================
+class UserMapper {
+  + map(o : Object[]) : UserDto
+}
+
+' =============================
+' USERUTIL CLASS
+' =============================
+class UserUtil {
+  + getUserName(user : User) : String
+}
+
+' =============================
+' USERCREATEDEVENT CLASS
+' =============================
+class UserCreatedEvent {
+  - user : User
+  --
+  + getUser() : User
+  + setUser(user : User) : void
+  + toString() : String
+}
+
+' =============================
+' PASSWORDCHANGEDEVENT CLASS
+' =============================
+class PasswordChangedEvent {
+  - user : User
+  --
+  + getUser() : User
+  + setUser(user : User) : void
+}
+
+' =============================
+' AUTHENTICATIONTOKEN CLASS
+' =============================
+class AuthenticationToken {
+  - id : String
+  - userId : String
+  - longLasted : boolean
+  - creationDate : Date
+  - lastConnectionDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + isLongLasted() : boolean
+  + setLongLasted(longLasted : boolean) : void
+  + getCreationDate() : Date
+  + setCreationDate(d : Date) : void
+  + getLastConnectionDate() : Date
+  + setLastConnectionDate(d : Date) : void
+  + toString() : String
+}
+
+' =============================
+' AUTHETICATIONTOKENDao CLASS
+' =============================
+class AutheticationTokenDao {
+  + get(id : String) : AuthenticationToken
+  + create(authenticationToken : AuthenticationToken) : String
+  + delete(authenticationTokenId : String) : void
+  + deleteOldSessionToken(userId : String) : void
+  + updateLastConnectionDate(id : String) : void
+}
+
+' =============================
+' IPRINCIPAL INTERFACE
+' =============================
+interface IPrincipal {
+  + isAnonymous() : boolean
+  + getId() : String
+  + getLocale() : Locale
+  + getDateTimeZone() : DateTimeZone
+  + getEmail() : String
+}
+
+' =============================
+' ROLEBASEFUNCTIONDAO CLASS
+' =============================
+class RoleBaseFunctionDao {
+  + findByRoleId(roleId : String) : Set<String>
+}
+
+' =============================
+' ROLE CLASS
+' =============================
+class Role {
+  - id : String
+  - name : String
+  - createDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(d : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(d : Date) : void
+  + toString() : String
+}
+
+' =============================
+' ROLEBASEFUNCTION CLASS
+' =============================
+class RoleBaseFunction {
+  - id : String
+  - roleId : String
+  - baseFunctionId : String
+  - createDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getRoleId() : String
+  + setRoleId(rId : String) : void
+  + getBaseFunctionId() : String
+  + setBaseFunctionId(bfId : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(d : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(d : Date) : void
+  + toString() : String
+}
+
+' =============================
+' BASEFUNCTION CLASS
+' =============================
+class BaseFunction {
+  - id : String
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + toString() : String
+}
+
+' =============================
+' SECURITYFILTER (ABSTRACT) CLASS
+' =============================
+abstract class SecurityFilter {
+  + init(filterConfig : FilterConfig) : void
+  + destroy() : void
+  + doFilter(req : ServletRequest, resp : ServletResponse, chain : FilterChain) : void
+  # authenticate(request : HttpServletRequest) : User
+}
+
+' =============================
+' TOKENBASEDSECURITYFILTER CLASS
+' =============================
+class TokenBasedSecurityFilter {
+  + extractAuthToken(cookies : Cookie[]) : String
+  + handleExpiredToken(dao : AuthenticationTokenDao, authTokenID : String) : void
+  + isTokenExpired(authenticationToken : AuthenticationToken) : boolean
+  + authenticate(request : HttpServletRequest) : User
+}
+
+' =============================
+' HEADERBASEDSECURITYFILTER CLASS
+' =============================
+class HeaderBasedSecurityFilter {
+  - enabled : boolean
+  --
+  + init(filterConfig : FilterConfig) : void
+  + authenticate(request : HttpServletRequest) : User
+}
+
+' =============================
+' REQUESTCONTEXTFILTER CLASS
+' =============================
+class RequestContextFilter {
+  - log : Logger
+  --
+  + init(filterConfig : FilterConfig) : void
+  + destroy() : void
+  + doFilter(request : ServletRequest, response : ServletResponse, chain : FilterChain) : void
+}
+
+' =============================
+' USERPRINCIPAL CLASS
+' =============================
+class UserPrincipal {
+  - id : String
+  - name : String
+  - locale : Locale
+  - dateTimeZone : DateTimeZone
+  - email : String
+  - baseFunctionSet : Set<String>
+  --
+  + UserPrincipal(id : String, name : String)
+  + isAnonymous() : boolean
+  + getId() : String
+  + setId(id : String) : void
+  + getName() : String
+  + setName(n : String) : void
+  + getLocale() : Locale
+  + setLocale(loc : Locale) : void
+  + getDateTimeZone() : DateTimeZone
+  + setDateTimeZone(dt : DateTimeZone) : void
+  + getEmail() : String
+  + setEmail(em : String) : void
+  + getBaseFunctionSet() : Set<String>
+  + setBaseFunctionSet(s : Set<String>) : void
+}
+
+' =============================
+' ANONYMOUSPRINCIPAL CLASS
+' =============================
+class AnonymousPrincipal {
+  + getId() : String
+  + getName() : String
+  + isAnonymous() : boolean
+  + getLocale() : Locale
+  + setLocale(loc : Locale) : void
+  + getDateTimeZone() : DateTimeZone
+  + setDateTimeZone(dt : DateTimeZone) : void
+  + getEmail() : String
+}
+
+' =============================
+' VALIDATIONUTIL CLASS
+' =============================
+class ValidationUtil {
+  + validateRequired(s : Object, name : String) : void
+  + validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer, nullable : boolean) : String
+  + validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer) : String
+  + validateStringNotBlank(s : String, name : String) : String
+  + validateEmail(s : String, name : String) : void
+  + validateHttpUrl(s : String, name : String) : String
+  + validateAlphanumeric(s : String, name : String) : void
+  + validateDate(s : String, name : String, nullable : boolean) : Date
+}
+
+' =============================
+' BASERESOURCE CLASS
+' =============================
+class BaseResource {
+  - request : HttpServletRequest
+  - appKey : String
+  - principal : IPrincipal
+  --
+  + authenticate() : void
+  + checkBaseFunction(bf : BaseFunction) : void
+  + hasBaseFunction(bf : BaseFunction) : boolean
+}
+
+' =============================
+' LOCALE CLASS
+' =============================
+class Locale {
+  - id : String
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + toString() : String
+}
+
+' =============================
+' LOCALDAO CLASS
+' =============================
+class LocaleDao {
+  + getById(id : String) : Locale
+  + findAll() : List<Locale>
+}
+
+' =============================
+' LOCALEUTIL CLASS
+' =============================
+class LocaleUtil {
+  + getLocale(localeCode : String) : Locale
+  + getLocaleIdFromAcceptLanguage(acceptLanguageHeader : String) : String
+}
+
+' =============================
+' LOCALERESOURCE CLASS
+' =============================
+class LocaleResource {
+  + list() : Response
+}
+
+' =============================
+' THEMERESOURCE CLASS
+' =============================
+class ThemeResource {
+  + list() : Response
+}
+
+' =============================
+' THEMEDAO CLASS
+' =============================
+class ThemeDao {
+  + findAll(servletContext : ServletContext) : List<String>
+}
+
+' =============================
+' CATEGORYRESOURCE CLASS
+' =============================
+class CategoryResource {
+  + list() : Response
+  + get(id : String, unread : boolean, limit : Integer, afterArticle : String) : Response
+  + add(name : String) : Response
+  + delete(id : String) : Response
+  + read(id : String) : Response
+  + update(id : String, name : String, order : Integer, folded : Boolean) : Response
+}
+
+' =============================
+' CATEGORYDAO CLASS
+' =============================
+class CategoryDao {
+  - em : EntityManager
+  --
+  + create(category : Category) : String
+  + update(category : Category) : Category
+  + reorder(category : Category, order : int) : void
+  + delete(id : String) : void
+  + getRootCategory(userId : String) : Category
+  + getCategory(id : String, userId : String) : Category
+  + getCategoryCount(parentId : String, userId : String) : int
+  + findAllCategory(userId : String) : List<Category>
+  + findSubCategory(parentId : String, userId : String) : List<Category>
+}
+
+' =============================
+' CATEGORY CLASS
+' =============================
+class Category {
+  - id : String
+  - userId : String
+  - parentId : String
+  - name : String
+  - order : Integer
+  - folded : boolean
+  - createDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(uId : String) : void
+  + getParentId() : String
+  + setParentId(pId : String) : void
+  + getName() : String
+  + setName(n : String) : void
+  + getOrder() : Integer
+  + setOrder(o : Integer) : void
+  + isFolded() : boolean
+  + setFolded(f : boolean) : void
+  + getCreateDate() : Date
+  + setCreateDate(d : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(d : Date) : void
+  + toString() : String
+}
+
+
+
+' =============================
+' MESSAGEUTIL CLASS
+' =============================
+class MessageUtil {
+  + getMessage(key : String, args... : Object) : String
+}
+
+' =============================
+' ENVIRONMENTUTIL CLASS
+' =============================
+class EnvironmentUtil {
+  + isWindows() : boolean
+  + isMacOs() : boolean
+  + isUnix() : boolean
+  + isUnitTest() : boolean
+  + getWindowsAppData() : String
+  + getMacOsUserHome() : String
+  + getReaderHome() : String
+  + getHibernateProperties() : String
+  + isApplicationLogEnabled() : boolean
+  + isSslTrustAll() : boolean
+  + isWebappContext() : boolean
+  + setWebappContext(webappContext : boolean) : void
+}
+
+' =============================
+' DIRECTORYUTIL CLASS
+' =============================
+class DirectoryUtil {
+  + getBaseDataDirectory() : File
+  + getDbDirectory() : File
+  + getFaviconDirectory() : File
+  + getLuceneDirectory() : File
+  + getLogDirectory() : File
+}
+
+' =============================
+' RESOURCEUTIL CLASS
+' =============================
+class ResourceUtil {
+  + list(clazz : Class, path : String, filter : FilenameFilter) : List<String>
+  + list(clazz : Class, path : String) : List<String>
+  + loadPropertiesFromUrl(url : URL) : Map<Object,Object>
+}
+
+' =============================
+' SESSIONUTIL CLASS
+' =============================
+class SessionUtil {
+  - SessionUtil()  ' private constructor
+  --
+  + getCurrentSession() : Session
+}
+
+' =============================
+' THREADLOCALCONTEXT CLASS
+' =============================
+class ThreadLocalContext {
+  ^threadLocalContext : ThreadLocal<ThreadLocalContext>
+  - entityManager : EntityManager
+  --
+  + get() : ThreadLocalContext
+  + cleanup() : void
+  + isInTransactionalContext() : boolean
+  + getEntityManager() : EntityManager
+  + setEntityManager(entityManager : EntityManager) : void
+}
+
+' =============================
+' APPRESOURCE CLASS
+' =============================
+class AppResource {
+  + version() : Response
+  + log() : Response
+  + batchReindex() : Response
+  + mapPort() : Response
+}
+
+' =============================
+' JOBRESOURCE CLASS
+' =============================
+class JobResource {
+  + delete(id : String) : Response
+}
+
+' =============================
+' ALLRESOURCE CLASS
+' =============================
+class AllResource {
+  + get(unread : boolean, limit : Integer, afterArticle : String) : Response
+  + read() : Response
+}
+
+' =============================
+' TRANSACTIONUTIL CLASS
+' =============================
+class TransactionUtil {
+  - log : Logger
+  --
+  + handle(runnable : Runnable) : void
+  + commit() : void
+}
+
+' =============================
+' FORBIDDENCLIENTEXCEPTION CLASS
+' =============================
+class ForbiddenClientException {
+  - serialVersionUID : long
+  + ForbiddenClientException()
+}
+
+' =============================
+' CLIENTEXCEPTION CLASS
+' =============================
+class ClientException {
+  - serialVersionUID : long
+  - log : Logger
+  --
+  + ClientException(type : String, message : String, e : Exception)
+  + ClientException(type : String, message : String)
+}
+
+' =============================
+' SERVEREXCEPTION CLASS
+' =============================
+class ServerException {
+  - serialVersionUID : long
+  - log : Logger
+  --
+  + ServerException(type : String, message : String, e : Exception)
+  + ServerException(type : String, message : String)
+}
+
+' =============================
+' GENERICEXCEPTIONMAPPER CLASS
+' =============================
+class GenericExceptionMapper {
+  - log : Logger
+  --
+  + toResponse(e : Exception) : Response
+}
+
+' =============================
+' JOB CLASS
+' =============================
+class Job {
+  - id : String
+  - userId : String
+  - name : String
+  - createDate : Date
+  - startDate : Date
+  - endDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(u : String) : void
+  + getName() : String
+  + setName(n : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(d : Date) : void
+  + getStartDate() : Date
+  + setStartDate(d : Date) : void
+  + getEndDate() : Date
+  + setEndDate(d : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(d : Date) : void
+  + toString() : String
+}
+
+' =============================
+' JOBDAO CLASS
+' =============================
+class JobDao {
+  # getQueryParam(criteria : JobCriteria, filterCriteria : FilterCriteria)
+  + create(job : Job) : String
+  + getActiveJob(id : String) : Job
+  + delete(id : String) : void
+  + update(job : Job) : Job
+}
+
+' =============================
+' JOBDTO CLASS
+' =============================
+class JobDto {
+  - id : String
+  - name : String
+  - userId : String
+  - createTimestamp : Long
+  - startTimestamp : Long
+  - endTimestamp : Long
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getName() : String
+  + setName(n : String) : void
+  + getUserId() : String
+  + setUserId(u : String) : void
+  + getCreateTimestamp() : Long
+  + setCreateTimestamp(l : Long) : void
+  + getStartTimestamp() : Long
+  + setStartTimestamp(l : Long) : void
+  + getEndTimestamp() : Long
+  + setEndTimestamp(l : Long) : void
+}
+
+' =============================
+' JOBEVENT CLASS
+' =============================
+class JobEvent {
+  - id : String
+  - jobId : String
+  - name : String
+  - value : String
+  - createDate : Date
+  - deleteDate : Date
+  --
+  + getId() : String
+  + setId(id : String) : void
+  + getJobId() : String
+  + setJobId(jId : String) : void
+  + getName() : String
+  + setName(n : String) : void
+  + getValue() : String
+  + setValue(v : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(d : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(d : Date) : void
+  + toString() : String
+}
+
+' =============================
+' JOBEVENTCRITERIA CLASS
+' =============================
+class JobEventCriteria {
+  - jobId : String
+  --
+  + getJobId() : String
+  + setJobId(jId : String) : JobEventCriteria
+}
+
+' =============================
+' JOBEVENTDAO CLASS
+' =============================
+class JobEventDao {
+  # getQueryParam(criteria : JobEventCriteria, filterCriteria : FilterCriteria)
+  + create(jobEvent : JobEvent) : String
+  + delete(id : String) : void
+}
+
+' =============================
+' JOBEVENTMAPPER CLASS
+' =============================
+class JobEventMapper {
+  + map(o : Object[]) : JobEventDto
+}
+
+' =============================
+' JOBMAPPER CLASS
+' =============================
+class JobMapper {
+  + map(o : Object[]) : JobDto
+}
+
+' =============================
+' MANAGEDPROVIDERCONNECTIONHELPER CLASS
+' =============================
+class ManagedProviderConnectionHelper {
+  - cfgProperties : Properties
+  - serviceRegistry : StandardServiceRegistryImpl
+  - connection : Connection
+  --
+  + ManagedProviderConnectionHelper(cfgProperties : Properties)
+  + prepare(needsAutoCommit : boolean) : void
+  + getConnection() : Connection
+  + release() : void
+}
+
+' =============================
+' SUPPLIEDCONNECTIONPROVIDERCONNECTIONHELPER CLASS
+' =============================
+class SuppliedConnectionProviderConnectionHelper {
+  - provider : ConnectionProvider
+  - connection : Connection
+  - toggleAutoCommit : boolean
+  --
+  + SuppliedConnectionProviderConnectionHelper(provider : ConnectionProvider)
+  + prepare(needsAutoCommit : boolean) : void
+  + getConnection() : Connection
+  + release() : void
+}
+
+' =============================
+' ENTITYMANAGERUTIL CLASS
+' =============================
+class EntityManagerUtil {
+  + flush() : void
+}
+
+' =============================
+' EMF CLASS
+' =============================
+class EMF {
+  - log : Logger
+  - properties : Map<Object,Object>
+  - emfInstance : EntityManagerFactory
+  --
+  - getEntityManagerProperties() : Map<Object,Object>
+  - getEntityManagerPropertiesFromEnvironment() : Map<Object,Object>
+  + get() : EntityManagerFactory
+  + isDriverHsql() : boolean
+  + isDriverPostgresql() : boolean
+  + getDriver() : String
+}
+
+' =============================
+' JOBCRITERIA CLASS
+' =============================
+class JobCriteria {
+  - userId : String
+  --
+  + getUserId() : String
+  + setUserId(u : String) : JobCriteria
+}
+
+' =============================
+' DEPLOYMENTSTATUS CLASS
+' =============================
+class DeploymentStatus {
+  - serverState : ServerState
+  - startTime : Date
+  - url : String
+  - memoryUsed : int
+  - errorMessage : String
+  --
+  + DeploymentStatus(serverState : ServerState, startTime : Date, url : String, memoryUsed : int, errorMessage : String)
+  + getServerState() : ServerState
+  + getStartTime() : Date
+  + getUrl() : String
+  + getMemoryUsed() : int
+  + getErrorMessage() : String
+}
+
+' =============================
+' CONSTANTS CLASS
+' =============================
+class Constants {
+  + REQUEST_CODE_ARTICLES : int
+  + REQUEST_CODE_MANAGE_CATEGORIES : int
+}
+
+' =============================
+' DATEUTIL CLASS
+' =============================
+class DateUtil {
+  + guessTimezoneOffset(date : String) : String
+  + parseDate(date : String, df : DateTimeFormatter) : Date
+}
+
+' =============================
+' SETTING CLASS
+' =============================
+class Setting {
+  - host : String
+  - port : int
+  - contextPath : String
+  - readerHome : String
+  - autoStart : boolean
+  - secure : boolean
+  - keyStorePath : String
+  - keyStorePassword : String
+  - keyManagerPassword : String
+  --
+  + Setting()
+  + read() : void
+  + save() : void
+  + getHost() : String
+  + setHost(h : String) : void
+  + getPort() : int
+  + setPort(p : int) : void
+  + getContextPath() : String
+  + setContextPath(cp : String) : void
+  + getReaderHome() : String
+  + setReaderHome(rh : String) : void
+  + isAutoStart() : boolean
+  + setAutoStart(as : boolean) : void
+  + isSecure() : boolean
+  + setSecure(s : boolean) : void
+  + getKeyStorePath() : String
+  + setKeyStorePath(kp : String) : void
+  + getKeyStorePassword() : String
+  + setKeyStorePassword(ksp : String) : void
+  + getKeyManagerPassword() : String
+  + setKeyManagerPassword(kmp : String) : void
+}
+
+' =============================
+' SETTINGPANEL CLASS
+' =============================
+class SettingPanel {
+  + SettingPanel(readerAgent : ReaderAgent)
+  + readSetting() : void
+  + saveSetting() : void
+}
+
+' =============================
+' STATUSPANEL CLASS
+' =============================
+class StatusPanel {
+  + StatusPanel(readerAgent : ReaderAgent)
+  + notifyDeploymentStatus(status : DeploymentStatus) : void
+}
+
+' =============================
+' FOR ANY CLASSES MENTIONED BUT NOT DETAILED, CREATE EMPTY STUBS
+' (We already have the main ones above, but we'll add stubs if needed)
+
+' 1) JsonUtil
+class JsonUtil {
+  
+  
+
+  
+  + append(o : JSONObject, key : String, value : JSONObject) : JSONObject
+}
+
+' 2) DialectUtil
+class DialectUtil {
+  
+  
+
+  
+  + isObjectNotFound(message : String) : boolean
+  + transform(sql : String) : String
+  + transformToPostgresql(sql : String) : String
+  + getDateDiff(field : String, diff : String, unit : String) : String
+  + getTimeStamp(value : String) : String
+  + getNullParameter(parameterName : String, value : Object) : String
+}
+
+' 3) NetworkUtil
+class NetworkUtil {
+  
+  - log : Logger
+
+  
+  + mapTcpPort(port : int) : boolean
+}
+
+' 4) JsonValidationUtil
+class JsonValidationUtil {
+  
+  
+
+  
+  + validateJsonRequired(n : JsonNode, name : String) : void
+  + validateJsonObject(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonNumber(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonLong(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonString(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonArray(n : JsonNode, name : String, required : boolean) : void
+}
+
+' 5) AppContext
+class AppContext {
+  
+  - static instance : AppContext
+  - eventBus : EventBus
+  - asyncEventBus : EventBus
+  - mailEventBus : EventBus
+  - importEventBus : EventBus
+  - feedService : FeedService
+  - indexingService : IndexingService
+  - asyncExecutorList : List<ExecutorService>
+
+  
+  - AppContext()
+  + static getInstance() : AppContext
+  - resetEventBus() : void
+  - newAsyncEventBus() : EventBus
+  + waitForAsync() : void
+  + getEventBus() : EventBus
+  + getAsyncEventBus() : EventBus
+  + getMailEventBus() : EventBus
+  + getImportEventBus() : EventBus
+  + getFeedService() : FeedService
+  + getIndexingService() : IndexingService
+}
+
+' 6) ReaderAgent
+class ReaderAgent {
+  
+  - listeners : List<DeploymentStatusListener>
+  - trayController : TrayController
+  - frame : AgentFrame
+  - elevated : boolean
+  - readerDeployer : ReaderDeployer
+  - setting : Setting
+
+  
+  + ReaderAgent()
+  + notifyDeploymentInfo() : void
+  - setLookAndFeel() : void
+  + checkElevation(args : String...) : void
+  - isElevationNeeded() : boolean
+  + addListener(listener : DeploymentStatusListener) : void
+  + showStatusPanel() : void
+  + showTrayIconMessage() : void
+  + exit() : void
+  + openBrowser() : void
+  - start(args : List<String>) : void
+  + static main(args : String[]) : void
+  + getReaderDeployer() : ReaderDeployer
+  - isElevated() : boolean
+  + getSetting() : Setting
+}
+
+' 7) ReaderDeployer
+class ReaderDeployer {
+  
+  - static final READER_WAR : String
+  - startTime : Date
+  - server : Server
+  - readerAgent : ReaderAgent
+  - exception : Exception
+  - serverState : ServerState
+
+  
+  + ReaderDeployer(readerAgent : ReaderAgent)
+  + start() : void
+  + stop() : void
+  + getErrorMessage() : String
+  + getMemoryUsed() : int
+  + getUrl() : String
+  + getDeploymentStatus() : DeploymentStatus
+  + lifeCycleStarting(event : LifeCycle) : void
+  + lifeCycleStarted(event : LifeCycle) : void
+  + lifeCycleStopping(event : LifeCycle) : void
+  + lifeCycleStopped(event : LifeCycle) : void
+  + lifeCycleFailure(event : LifeCycle, cause : Throwable) : void
+}
+
+' 8) AgentFrame
+class AgentFrame {
+  
+  - static final serialVersionUID : long
+  - final statusPanel : StatusPanel
+  - final settingPanel : SettingPanel
+  - tabbedPane : JTabbedPane
+  - closeButton : JButton
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + AgentFrame(readerAgent : ReaderAgent)
+  + centerComponent() : void
+  - initComponent() : void
+  + showStatusPanel() : void
+  + showSettingPanel() : void
+  - setIcon(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 9) TrayController
+class TrayController {
+  
+  - readerAgent : ReaderAgent
+  - trayIcon : TrayIcon
+  - openAction : Action
+  - controlPanelAction : Action
+  - hideAction : Action
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + TrayController(readerAgent : ReaderAgent)
+  + showMessage() : void
+  - createImage(resourceName : String) : Image
+  - createMenuItem(action : Action) : MenuItem
+  + uninstallComponents() : void
+  - setTrayImage(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 10) IndexingService
+class IndexingService {
+  
+  - static log : Logger
+  - directory : Directory
+  - directoryReader : DirectoryReader
+  - luceneStorageConfig : String
+
+  
+  # startUp() : void
+  # shutDown() : void
+  # runOneIteration() : void
+  # scheduler() : Scheduler
+  + searchArticles(userId : String, searchQuery : String, offset : Integer, limit : Integer) : PaginatedList<UserArticleDto>
+  + rebuildIndex() : void
+  + getDirectory() : Directory
+  + getDirectoryReader() : DirectoryReader
+}
+
+' 11) RebuildIndexAsyncEvent
+class RebuildIndexAsyncEvent {
+  
+  
+
+  
+  + toString() : String
+}
+
+' 12) RebuildIndexAsyncListener
+class RebuildIndexAsyncListener {
+  
+  - static final log : Logger
+
+  
+  + onArticleCreated(rebuildIndexAsyncEvent : RebuildIndexAsyncEvent) : void
+}
+
+' 13) SortCriteria
+class SortCriteria {
+  
+  - column : int
+  - asc : boolean
+  - sortQuery : String
+
+  
+  + SortCriteria(sortQuery : String)
+  + SortCriteria(column : Integer, asc : Boolean)
+  + getSortQuery() : String
+  + getColumn() : int
+  + isAsc() : boolean
+}
+
+' 14) QueryParam
+class QueryParam {
+  
+  - queryString : String
+  - criteriaList : List<String>
+  - parameterMap : Map<String, Object>
+  - sortCriteria : SortCriteria
+  - filterCriteria : FilterCriteria
+  - groupByList : List<String>
+  - resultMapper : ResultMapper
+
+  
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, groupByList : List<String>, resultMapper : ResultMapper)
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, resultMapper : ResultMapper)
+  + getQueryString() : String
+  + setQueryString(queryString : String) : void
+  + getSortCriteria() : SortCriteria
+  + setSortCriteria(sortCriteria : SortCriteria) : void
+  + getCriteriaList() : List<String>
+  + getParameterMap() : Map<String, Object>
+  + getFilterCriteria() : FilterCriteria
+  + getGroupByList() : List<String>
+  + getResultMapper() : ResultMapper
+}
+
+' 15) FilterCriteria
+class FilterCriteria {
+  
+  - filterColumnList : List<FilterColumn>
+
+  
+  + FilterCriteria(filterColumnList : List<FilterColumn>)
+  + getFilterColumnList() : List<FilterColumn>
+}
+
+' 16) FilterColumn
+class FilterColumn {
+  
+  # column : String
+  # filter : String
+
+  
+  + FilterColumn(column : String, filter : String)
+  + getColumn() : String
+  + getFilter() : String
+  + getPredicate() : String
+  + getParamValue() : Object
+  + getParamName() : String
+  + hasParam() : boolean
+}
+
+' 17) SearchResource
+class SearchResource {
+  
+  
+
+  
+  + get(query : String, limit : Integer, offset : Integer)
+}
+
+' 18) PaginatedLists
+class PaginatedLists {
+  
+  - DEFAULT_PAGE_SIZE : int
+  - MAX_PAGE_SIZE : int
+
+  
+  + create(pageSize : Integer, offset : Integer) : PaginatedList<E>
+  + create() : PaginatedList<E>
+  + executeQuery(queryParam : QueryParam) : List<E>
+  + executePaginatedQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam, sortCriteria : SortCriteria) : void
+  - executeCountQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - executeResultQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - getQueryString(queryParam : QueryParam) : String
+  - getNativeCountQuery(queryParam : QueryParam) : String
+  - getOrderByClause(sortCriteria : SortCriteria) : String
+  - mapQueryParam(query : Query, queryParam : QueryParam) : void
+  - mapFilterColumn(query : Query, queryParam : QueryParam) : void
+}
+
+' 19) PaginatedList<T>
+class PaginatedList {
+  
+  - limit : int
+  - offset : int
+  - resultCount : int
+  - resultList : List<T>
+
+  
+  + PaginatedList(pageSize : int, offset : int)
+  + getResultCount() : int
+  + setResultCount(resultCount : int) : void
+  + getResultList() : List<T>
+  + setResultList(resultList : List<T>) : void
+  + getLimit() : int
+  + getOffset() : int
+}
+
+' 20) LuceneUtil
+class LuceneUtil {
+  
+  - static log : Logger
+
+  
+  + static handle(runnable : LuceneRunnable) : void
+}
+
+' 21) LogCriteria
+class LogCriteria {
+  
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + getLevel() : String
+  + setLevel(level : String) : LogCriteria
+  + getTag() : String
+  + setTag(tag : String) : LogCriteria
+  + getMessage() : String
+  + setMessage(message : String) : LogCriteria
+}
+
+' 22) LogEntry
+class LogEntry {
+  
+  - timestamp : long
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + LogEntry(timestamp : long, level : String, tag : String, message : String)
+  + getTimestamp() : long
+  + getLevel() : String
+  + getTag() : String
+  + getMessage() : String
+}
+
+' 23) MemoryAppender
+class MemoryAppender {
+  
+  - size : int
+  - logQueue : Queue<LogEntry>
+
+  
+  + requiresLayout() : boolean
+  + close() : void
+  + append(event : LoggingEvent) : void
+  - getLoggerName(event : LoggingEvent) : String
+  + getLogList() : Queue<LogEntry>
+  + setSize(size : int) : void
+  + find(criteria : LogCriteria, list : PaginatedList<LogEntry>) : void
+}
+
+' 24) DeadEventListener
+class DeadEventListener {
+  
+  - static final log : Logger
+
+  
+  + onDeadEvent(deadEvent : DeadEvent) : void
+}
+
+' 25) HttpUtil
+class HttpUtil {
+  
+  - static final log : Logger
+
+  
+  + static readUrlIntoString(url : URL) : String
+  + static postUrl(url : URL, data : String) : String
+}
+
+' 26) UrlUtil
+class UrlUtil {
+  
+  
+
+  
+  + static getBaseUri(feed : Feed, article : Article) : String
+  + static getBaseUri(urlString : String) : String
+  + static completeUrl(baseUrl : String, relativeUrl : String) : String
+}
+
+' 27) Helper
+class Helper {
+  
+  - static log : Logger
+  - js : JSEngine
+
+  
+  + Helper(js : JSEngine)
+  + log(msg : Object) : void
+  + load(path : String) : void
+  + fileExists(stringPath : String) : boolean
+  + canAutoupdate() : boolean
+  + timerTask(runnable : Runnable) : TimerTask
+}
+
+' 28) JSEngine
+class JSEngine {
+  
+  - engine : ScriptEngine
+
+  
+  + JSEngine()
+  + evaluate(script : String) : Object
+  + put(key : String, value : Object) : void
+}
+
+' 29) DbOpenHelper
+abstract class DbOpenHelper {
+  
+  - static log : Logger
+  - final connectionHelper : ConnectionHelper
+  - final sqlStatementLogger : SqlStatementLogger
+  - final exceptions : List<Exception>
+  - formatter : Formatter
+  - haltOnError : boolean
+  - stmt : Statement
+
+  
+  + DbOpenHelper(serviceRegistry : ServiceRegistry)
+  + open() : void
+  # executeAllScript(version : int) : void
+  - executeScript(inputScript : InputStream) : void
+  # abstract onCreate() : void
+  # abstract onUpgrade(oldVersion : int, newVersion : int) : void
+  + getExceptions() : List<?>
+  + setHaltOnError(haltOnError : boolean) : void
+  + setFormat(format : boolean) : void
+}
+
+' 30) ReaderHttpClient<T>
+abstract class ReaderHttpClient {
+  
+  - USER_AGENT : String
+  - sslSocketFactory : SSLSocketFactory
+  - timeout : int
+
+  
+  + open(url : URL) : T
+  - buildHttpConnection(url : URL) : HttpURLConnection
+  # abstract process(is : InputStream) : T
+  + setTimeout(timeout : int) : void
+}
+
+' 31) ReaderStandardAnalyzer
+class ReaderStandardAnalyzer {
+  
+  + static final DEFAULT_MAX_TOKEN_LENGTH : int
+  - maxTokenLength : int
+  + static final STOP_WORDS_SET : CharArraySet
+
+  
+  + ReaderStandardAnalyzer(matchVersion : Version, stopWords : CharArraySet)
+  + ReaderStandardAnalyzer(matchVersion : Version)
+  + ReaderStandardAnalyzer(matchVersion : Version, stopwords : Reader)
+  + setMaxTokenLength(length : int) : void
+  + getMaxTokenLength() : int
+  # createComponents(fieldName : String, reader : Reader) : TokenStreamComponents
+  # initReader(fieldName : String, reader : Reader) : Reader
+}
+
+' 32) AdblockUtil
+class AdblockUtil {
+  
+  - static final log : Logger
+  - subscriptions : List<Subscription>
+  - js : JSEngine
+  - interactive : boolean
+
+  
+  + start() : void
+  + getSubscriptions() : List<Subscription>
+  + getSubscription(url : String) : Subscription
+  + setSubscription(subscription : Subscription) : void
+  + refreshSubscription() : void
+  + offerSubscription() : Subscription
+  + verifySubscriptions() : boolean
+  + matches(url : String, query : String, reqHost : String, refHost : String, accept : String) : Boolean
+  + startInteractive() : void
+  + stopInteractive() : void
+  + checkLocalePrefixMatch(prefixes : String[]) : String
+}
+
+' 33) TextPlainMessageBodyWriter
+class TextPlainMessageBodyWriter {
+  
+  
+
+  
+  + isWriteable(type : Class<?>, genericType : Type, annotations : Annotation[], mediaType : MediaType) : boolean
+  + getSize(array : JSONObject, type : Class<?>, genericType : Type, annotations : Annotation[], mediaType : MediaType) : long
+  + writeTo(jsonObject : JSONObject, ...) : void
+}
+
+' 34) ArticleAssembler
+class ArticleAssembler {
+  
+  
+
+  
+  + static asJson(userArticle : UserArticleDto) : JSONObject
+}
+
+' 35) ResutMapper<T>
+abstract class ResutMapper {
+  
+  
+
+  
+  + abstract map(cols : Object[]) : T
+  + map(rows : List<Object[]>) : List<T>
+  - characterValue(o : Object) : Character
+  - characterValueAsString(o : Object) : String
+  - stringValue(o : Object) : String
+  - booleanValue(o : Object) : Boolean
+  - intValue(o : Object) : Integer
+  - longValue(o : Object) : Long
+  - floatValue(o : Object) : Float
+  - doubleValue(o : Object) : Double
+  - bigDecimalValue(o : Object) : BigDecimal
+  - dateValue(o : Object) : Date
+  - getString(clob : Clob) : String
+  - arrayValue(o : Object) : String
+}
+
+' 36) BaseDao
+abstract class BaseDao {
+  
+  
+
+  
+  + findByCriteria(list : PaginatedList<T>, criteria : C, sortCriteria : SortCriteria, filterCriteria : FilterCriteria) : void
+  + findByCriteria(criteria : C, sortCriteria : SortCriteria, filterCriteria : FilterCriteria) : List<T>
+  + findByCriteria(criteria : C) : List<T>
+  + findFirstByCriteria(criteria : C) : T
+  # abstract getQueryParam(criteria : C, filterCriteria : FilterCriteria) : QueryParam
+}
+
+
+
+
+
+
+' 41) Config
+class Config {
+  
+  - id : ConfigType
+  - value : String
+
+  
+  + getId() : ConfigType
+  + setId(id : ConfigType) : void
+  + getValue() : String
+  + setValue(value : String) : void
+  + toString() : String
+}
+
+' 42) ConfigDao
+class ConfigDao {
+  
+  - em : EntityManager
+
+  
+  + getById(id : ConfigType) : Config
+}
+
+' 43) ConfigUtil
+class ConfigUtil {
+  
+  
+
+  
+  + static getConfigStringValue(configType : ConfigType) : String
+  + static getConfigBundle() : ResourceBundle
+  + static getConfigIntegerValue(configType : ConfigType) : int
+  + static getConfigBooleanValue(configType : ConfigType) : boolean
+}
+
+
+
+
+' =============================
+' INHERITANCE / IMPLEMENTS
+' (Where specifically mentioned)
+' =============================
+
+SecurityFilter <|-- TokenBasedSecurityFilter
+SecurityFilter <|-- HeaderBasedSecurityFilter
+
+IPrincipal <|-- UserPrincipal
+IPrincipal <|-- AnonymousPrincipal
+
+' =============================
+' SOME KEY ASSOCIATIONS
+' (Based on the textual "Relationships" from each doc snippet)
+' =============================
+
+UserCreatedEvent *-- User
+PasswordChangedEvent --> User
+UserDao --> User
+UserUtil ..> User
+TokenBasedSecurityFilter --> AuthenticationTokenDao
+TokenBasedSecurityFilter --> UserDao
+TokenBasedSecurityFilter --> AuthenticationToken
+RoleBaseFunctionDao --> Role
+RoleBaseFunctionDao --> BaseFunction
+Role --> BaseFunction
+CategoryDao --> Category
+LocaleDao --> Locale
+LocaleResource --> LocaleDao
+ThemeResource --> ThemeDao
+JobDao --> Job
+JobEventDao --> JobEvent
+JobEventMapper --> JobEventDto
+JobMapper --> JobDto
+ThreadLocalContext ..> EntityManager
+TransactionUtil ..> ThreadLocalContext
+ClientException --|> WebApplicationException
+ServerException --|> WebApplicationException
+ForbiddenClientException --|> WebApplicationException
+GenericExceptionMapper ..|> ExceptionMapper
+AllResource --> FeedSubscriptionDao
+AllResource --> UserArticleDao
+' (and so on; not all minor associations are repeated here to keep diagram simpler)
+
+@enduml

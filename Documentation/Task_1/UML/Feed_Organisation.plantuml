@@ -1,0 +1,1597 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam wrapWidth 200
+hide methods
+hide stereotypes
+
+' ------------------------
+' Placeholder classes that are referenced but not defined among the 35:
+' ------------------------
+class AbstractScheduledService << (A,#FF7700) >> {
+}
+
+' ------------------------
+' 1. BaseDao (abstract)
+' ------------------------
+abstract class BaseDao<T, C> {
+  --
+  ' Key public methods from the text
+  + findByCriteria(list: PaginatedList<T>, criteria: C, sort: SortCriteria, filter: FilterCriteria) : void
+  + findByCriteria(criteria: C, sort: SortCriteria, filter: FilterCriteria) : List<T>
+  + findByCriteria(criteria: C) : List<T>
+  + findFirstByCriteria(criteria: C) : T
+  # getQueryParam(criteria: C, filter: FilterCriteria) : QueryParam
+}
+
+' ------------------------
+' 2. ResultMapper (abstract)
+' ------------------------
+abstract class ResultMapper<T> {
+  --
+  + map(rows: List<Object[]>) : List<T>
+  + map(cols: Object[]) : T
+  --
+  - characterValue(o: Object) : Character
+  - stringValue(o: Object) : String
+  - booleanValue(o: Object) : Boolean
+  - intValue(o: Object) : Integer
+  - longValue(o: Object) : Long
+  - floatValue(o: Object) : Float
+  - doubleValue(o: Object) : Double
+  - bigDecimalValue(o: Object) : BigDecimal
+  - dateValue(o: Object) : Date
+}
+
+' ------------------------
+' 3. UserArticleDao
+' ------------------------
+class UserArticleDao {
+  -- No specific attributes (relies on BaseDao)
+  --
+  + create(userArticle: UserArticle) : String
+  + update(userArticle: UserArticle) : UserArticle
+  + markAsRead(criteria: UserArticleCriteria) : void
+  + delete(id: String) : void
+  + getUserArticle(id: String, userId: String) : UserArticle
+  # getQueryParam(criteria: UserArticleCriteria, filter: FilterCriteria) : QueryParam
+}
+
+UserArticleDao --|> BaseDao : extends
+UserArticleDao ..> UserArticle
+UserArticleDao ..> UserArticleCriteria
+UserArticleDao ..> UserArticleDto
+UserArticleDao ..> UserArticleMapper
+UserArticleDao ..> QueryParam
+
+' ------------------------
+' 4. UserArticleDto
+' ------------------------
+class UserArticleDto {
+  --
+  ' Key attributes
+  - id: String
+  - readTimestamp: Long
+  - starTimestamp: Long
+  - feedTitle: String
+  - feedSubscriptionId: String
+  - feedSubscriptionTitle: String
+  - articleId: String
+  - articleUrl: String
+  - articleGuid: String
+  - articleTitle: String
+  - articleCreator: String
+  - articleDescription: String
+  - articleCommentUrl: String
+  - articleCommentCount: Integer
+  - articleEnclosureUrl: String
+  - articleEnclosureLength: Integer
+  - articleEnclosureType: String
+  - articlePublicationTimestamp: Long
+}
+
+' ------------------------
+' 5. UserArticleMapper
+' ------------------------
+class UserArticleMapper {
+  --
+  + map(o: Object[]) : UserArticleDto
+}
+
+UserArticleMapper --|> ResultMapper : extends
+UserArticleMapper ..> UserArticleDto
+
+' ------------------------
+' 6. UserArticleCriteria
+' ------------------------
+class UserArticleCriteria {
+  --
+  - userId: String
+  - feedId: String
+  - visible: boolean
+  - subscribed: boolean
+  - feedSubscriptionId: String
+  - categoryId: String
+  - unread: boolean
+  - starred: boolean
+  - articleId: String
+  - articleIdIn: List<String>
+  - userArticleId: String
+  - articlePublicationDateMax: Date
+  - userArticleStarredDateMax: Date
+  - articleIdMax: String
+  - userArticleIdMax: String
+  - fetchAllFeedSubscription: boolean
+}
+
+' ------------------------
+' 7. UserArticle
+' ------------------------
+class UserArticle {
+  --
+  - id: String
+  - userId: String
+  - articleId: String
+  - createDate: Date
+  - readDate: Date
+  - starredDate: Date
+  - deleteDate: Date
+}
+
+' ------------------------
+' 8. IndexingService
+' ------------------------
+class IndexingService {
+  --
+  - static log: Logger
+  - directory: Directory
+  - directoryReader: DirectoryReader
+  - luceneStorageConfig: String
+
+  + searchArticles(userId: String, searchQuery: String, offset: Integer, limit: Integer): PaginatedList<UserArticleDto>
+  + rebuildIndex(): void
+  + getDirectory(): Directory
+  + getDirectoryReader(): DirectoryReader
+  # startUp(): void
+  # shutDown(): void
+  # runOneIteration(): void
+  # scheduler(): Scheduler
+}
+
+IndexingService --|> AbstractScheduledService : extends
+IndexingService ..> TransactionUtil
+IndexingService ..> ArticleDao
+IndexingService ..> UserArticleDao
+IndexingService ..> PaginatedList
+IndexingService ..> RebuildIndexAsyncEvent
+
+' We'll represent Directory, DirectoryReader as placeholders:
+
+' ------------------------
+' 9. RebuildIndexAsyncEvent
+' ------------------------
+class RebuildIndexAsyncEvent {
+  + toString() : String
+}
+
+' ------------------------
+' 10. RebuildIndexAsyncListener
+' ------------------------
+class RebuildIndexAsyncListener {
+  --
+  - static log: Logger
+  + onArticleCreated(e: RebuildIndexAsyncEvent) : void
+}
+
+RebuildIndexAsyncListener ..> RebuildIndexAsyncEvent
+RebuildIndexAsyncListener ..> ArticleDao
+RebuildIndexAsyncListener ..> TransactionUtil
+
+' ------------------------
+' 11. SortCriteria
+' ------------------------
+class SortCriteria {
+  --
+  - column: int
+  - asc: boolean
+  - sortQuery: String
+
+  + SortCriteria(sortQuery: String)
+  + SortCriteria(column: Integer, asc: Boolean)
+  + getSortQuery(): String
+  + getColumn(): int
+  + isAsc(): boolean
+}
+
+' ------------------------
+' 12. QueryParam
+' ------------------------
+class QueryParam {
+  --
+  - queryString: String
+  - criteriaList: List<String>
+  - parameterMap: Map<String, Object>
+  - sortCriteria: SortCriteria
+  - filterCriteria: FilterCriteria
+  - groupByList: List<String>
+  - resultMapper: ResultMapper
+
+  + QueryParam(...)  ' multiple constructor forms
+  + getQueryString(): String
+  + setQueryString(String): void
+  + getSortCriteria(): SortCriteria
+  + setSortCriteria(SortCriteria): void
+  + getCriteriaList(): List<String>
+  + getParameterMap(): Map<String, Object>
+  + getFilterCriteria(): FilterCriteria
+  + getGroupByList(): List<String>
+  + getResultMapper(): ResultMapper
+}
+
+QueryParam ..> SortCriteria
+QueryParam ..> FilterCriteria
+QueryParam ..> ResultMapper
+
+' ------------------------
+' 13. FilterCriteria
+' ------------------------
+class FilterCriteria {
+  --
+  - filterColumnList: List<FilterColumn>
+  + FilterCriteria(filterColumnList: List<FilterColumn>)
+  + getFilterColumnList(): List<FilterColumn>
+}
+
+' ------------------------
+' 14. FilterColumn
+' ------------------------
+class FilterColumn << (A, #BBEE77) >> {
+  --
+  - column: String
+  - filter: String
+
+  + FilterColumn(column: String, filter: String)
+  + getColumn(): String
+  + getFilter(): String
+  + getPredicate(): String   ' abstract in text
+  + getParamValue(): Object  ' abstract in text
+  + getParamName(): String
+  + hasParam(): boolean
+}
+
+FilterCriteria o-- "*" FilterColumn
+
+' ------------------------
+' 15. SearchResource
+' ------------------------
+class SearchResource {
+  + get(query: String, limit: Integer, offset: Integer)
+}
+
+SearchResource --|> BaseResource : extends
+SearchResource ..> IndexingService
+SearchResource ..> ArticleAssembler
+SearchResource ..> ValidationUtil
+
+
+
+' ------------------------
+' 16. PaginatedLists
+' ------------------------
+class PaginatedLists {
+  - DEFAULT_PAGE_SIZE: int
+  - MAX_PAGE_SIZE: int
+
+  + create(pageSize: Integer, offset: Integer) : PaginatedList<E>
+  + create() : PaginatedList<E>
+  + executeQuery(queryParam: QueryParam) : List<E>
+  + executePaginatedQuery(list: PaginatedList<E>, qp: QueryParam, s: SortCriteria) : void
+}
+
+PaginatedLists ..> PaginatedList
+PaginatedLists ..> QueryParam
+PaginatedLists ..> SortCriteria
+PaginatedLists ..> FilterColumn
+
+' ------------------------
+' 17. PaginatedList<T>
+' ------------------------
+class PaginatedList<T> {
+  --
+  - limit: int
+  - offset: int
+  - resultCount: int
+  - resultList: List<T>
+
+  + getResultCount(): int
+  + setResultCount(int): void
+  + getResultList(): List<T>
+  + setResultList(List<T>): void
+  + getLimit(): int
+  + getOffset(): int
+}
+
+' ------------------------
+' 18. LuceneUtil
+' ------------------------
+class LuceneUtil {
+  - static log: Logger
+  + handle(runnable: LuceneRunnable): void
+}
+
+interface LuceneRunnable {
+  + run(indexWriter: IndexWriter) : void
+}
+
+LuceneUtil ..> LuceneRunnable
+
+' We'll define IndexWriter as a placeholder
+
+
+' ------------------------
+' 19. StarredArticleImportedEvent
+' ------------------------
+class StarredArticleImportedEvent {
+  - feed: Feed
+  - article: Article
+  + getFeed(): Feed
+  + setFeed(Feed): void
+  + getArticle(): Article
+  + setArticle(Article): void
+  + toString(): String
+}
+
+
+StarredArticleImportedEvent o-- Feed
+StarredArticleImportedEvent o-- Article
+
+' ------------------------
+' 20. StarredReader
+' ------------------------
+class StarredReader {
+  - static log: Logger
+  - starredArticleImportedListener: StarredArticleImportedListener
+
+  + read(is: InputStream) : void
+  + setStarredArticleListener(listener: StarredArticleImportedListener) : void
+}
+
+class StarredArticleImportedListener {
+  + onStarredArticleImported(event: StarredArticleImportedEvent) : void
+}
+
+StarredReader --> StarredArticleImportedListener
+StarredReader *-- Article
+StarredReader *-- Feed
+
+
+
+' ------------------------
+' 21. StarredResource
+' ------------------------
+class StarredResource {
+  + get(limit: Integer, afterArticle: String)
+  + star(id: String)
+  + unstar(id: String)
+  + starMultiple(ids: List<String>)
+  + unstarMultiple(ids: List<String>)
+}
+
+StarredResource --|> BaseResource : extends
+
+' ------------------------
+' 22. LogCriteria
+' ------------------------
+class LogCriteria {
+  - level: String
+  - tag: String
+  - message: String
+  + getLevel(): String
+  + setLevel(String): LogCriteria
+  + getTag(): String
+  + setTag(String): LogCriteria
+  + getMessage(): String
+  + setMessage(String): LogCriteria
+}
+
+' ------------------------
+' 23. LogEntry
+' ------------------------
+class LogEntry {
+  - timestamp: long
+  - level: String
+  - tag: String
+  - message: String
+
+  + LogEntry(ts: long, level: String, tag: String, msg: String)
+  + getTimestamp(): long
+  + getLevel(): String
+  + getTag(): String
+  + getMessage(): String
+}
+
+' ------------------------
+' 24. MemoryAppender
+' ------------------------
+class MemoryAppender {
+  - size: int
+  - logQueue: Queue<LogEntry>
+  + requiresLayout(): boolean
+  + close(): void
+  + append(event: LoggingEvent): void
+  + getLogList(): Queue<LogEntry>
+  + setSize(int): void
+  + find(criteria: LogCriteria, list: PaginatedList<LogEntry>): void
+}
+
+MemoryAppender --|> AppenderSkeleton : extends
+MemoryAppender ..> LogCriteria
+MemoryAppender ..> PaginatedList
+MemoryAppender ..> LogEntry
+
+' We'll define LoggingEvent and Queue as placeholders:
+
+
+' ------------------------
+' 25. DeadEventListener
+' ------------------------
+class DeadEventListener {
+  - static log: Logger
+  + onDeadEvent(deadEvent: DeadEvent): void
+}
+
+DeadEventListener --> DeadEvent
+
+' ------------------------
+' 26. HttpUtil
+' ------------------------
+class HttpUtil {
+  - static log: Logger
+  + readUrlIntoString(url: URL): String
+  + postUrl(url: URL, data: String): String
+}
+
+
+HttpUtil ..> URL
+HttpUtil ..> URLConnection
+
+
+
+' ------------------------
+' 27. UrlUtil
+' ------------------------
+class UrlUtil {
+  + getBaseUri(feed: Feed, article: Article): String
+  + getBaseUri(urlString: String): String
+  + completeUrl(baseUrl: String, relativeUrl: String): String
+}
+
+UrlUtil ..> Feed
+UrlUtil ..> Article
+
+' ------------------------
+' 28. Helper
+' ------------------------
+class Helper {
+  - static log: Logger
+  - js: JSEngine
+
+  + Helper(js: JSEngine)
+  + log(msg: Object): void
+  + load(path: String): void
+  + fileExists(path: String): boolean
+  + canAutoupdate(): boolean
+  + timerTask(r: Runnable): TimerTask
+}
+
+Helper --> JSEngine
+Helper ..> Logger
+Helper ..> TimerTask
+
+
+
+' ------------------------
+' 29. JSEngine
+' ------------------------
+class JSEngine {
+  - engine: ScriptEngine
+  + JSEngine()
+  + evaluate(script: String): Object
+  + put(key: String, value: Object): void
+}
+
+
+JSEngine ..> ScriptEngine
+
+' ------------------------
+' 30. DbOpenHelper (abstract)
+' ------------------------
+abstract class DbOpenHelper {
+  - static log: Logger
+  - connectionHelper: ConnectionHelper
+  - sqlStatementLogger: SqlStatementLogger
+  - exceptions: List<Exception>
+  - formatter: Formatter
+  - haltOnError: boolean
+  - stmt: Statement
+
+  + open(): void
+  + onCreate(): void
+  + onUpgrade(oldV: int, newV: int): void
+  + getExceptions(): List<?>
+  + setHaltOnError(b: boolean): void
+  + setFormat(b: boolean): void
+  # executeAllScript(version: int): void
+  # executeScript(script: InputStream): void
+}
+
+
+DbOpenHelper ..> ConnectionHelper
+DbOpenHelper ..> SqlStatementLogger
+DbOpenHelper ..> Formatter
+DbOpenHelper ..> Statement
+DbOpenHelper ..> Exception
+
+' ------------------------
+' 31. ReaderHttpClient (abstract)
+' ------------------------
+abstract class ReaderHttpClient<T> {
+  - USER_AGENT: String
+  - sslSocketFactory: SSLSocketFactory
+  - timeout: int
+
+  + open(url: URL): T
+  + process(is: InputStream): T
+  + setTimeout(t: int): void
+}
+
+ReaderHttpClient ..> URL
+ReaderHttpClient ..> InputStream
+
+' ------------------------
+' 32. ReaderStandardAnalyzer
+' ------------------------
+class ReaderStandardAnalyzer {
+  - maxTokenLength: int
+  + setMaxTokenLength(length: int): void
+  + getMaxTokenLength(): int
+  + createComponents(fieldName: String, reader: Reader): Object
+  + initReader(fieldName: String, reader: Reader): Reader
+}
+
+ReaderStandardAnalyzer --|> StopwordAnalyzerBase : extends
+
+ReaderStandardAnalyzer ..> HTMLStripCharFilter
+ReaderStandardAnalyzer ..> StandardTokenizer
+ReaderStandardAnalyzer ..> StandardFilter
+ReaderStandardAnalyzer ..> LowerCaseFilter
+ReaderStandardAnalyzer ..> StopFilter
+
+class HTMLStripCharFilter
+class StandardTokenizer
+class StandardFilter
+class LowerCaseFilter
+class StopFilter
+
+' ------------------------
+' 33. AdblockUtil
+' ------------------------
+class AdblockUtil {
+  - static log: Logger
+  - subscriptions: List<Subscription>
+  - js: JSEngine
+  - interactive: boolean
+
+  + start(): void
+  + getSubscriptions(): List<Subscription>
+  + getSubscription(url: String): Subscription
+  + setSubscription(s: Subscription): void
+  + refreshSubscription(): void
+  + offerSubscription(): Subscription
+  + verifySubscriptions(): boolean
+  + matches(url: String, query: String, reqHost: String, refHost: String, accept: String): Boolean
+  + startInteractive(): void
+  + stopInteractive(): void
+  + checkLocalePrefixMatch(prefixes: String[]): String
+}
+
+
+AdblockUtil o-- Subscription
+AdblockUtil ..> JSEngine
+AdblockUtil ..> Helper
+AdblockUtil ..> SubscriptionParser
+
+' ------------------------
+' 34. TextPlainMessageBodyWriter
+' ------------------------
+class TextPlainMessageBodyWriter {
+  + isWriteable(type: Class, gType: Type, ann: Annotation[], mediaType: MediaType) : boolean
+  + getSize(json: JSONObject, type: Class, ... ) : long
+  + writeTo(jsonObject: JSONObject, ...) : void
+}
+
+interface MessageBodyWriter<T>
+
+TextPlainMessageBodyWriter ..> JSONObject
+TextPlainMessageBodyWriter ..> JSONException
+
+
+
+' ------------------------
+' 35. ArticleAssembler
+' ------------------------
+class ArticleAssembler {
+  + asJson(userArticle: UserArticleDto): JSONObject
+}
+
+ArticleAssembler ..> UserArticleDto
+ArticleAssembler ..> JSONObject
+
+' ------------------------
+' Draw some additional lines for clarity:
+' ------------------------
+BaseDao ..> PaginatedList
+BaseDao ..> PaginatedLists
+BaseDao ..> SortCriteria
+BaseDao ..> FilterCriteria
+BaseDao ..> QueryParam
+
+ResultMapper ..> SerializableClobProxy
+ResultMapper ..> IOUtils
+
+' 1) JsonUtil
+class JsonUtil {
+  
+  
+
+  
+  + append(o : JSONObject, key : String, value : JSONObject) : JSONObject
+}
+
+' 2) DialectUtil
+class DialectUtil {
+  
+  
+
+  
+  + isObjectNotFound(message : String) : boolean
+  + transform(sql : String) : String
+  + transformToPostgresql(sql : String) : String
+  + getDateDiff(field : String, diff : String, unit : String) : String
+  + getTimeStamp(value : String) : String
+  + getNullParameter(parameterName : String, value : Object) : String
+}
+
+' 3) NetworkUtil
+class NetworkUtil {
+  
+  - log : Logger
+
+  
+  + mapTcpPort(port : int) : boolean
+}
+
+' 4) JsonValidationUtil
+class JsonValidationUtil {
+  
+  
+
+  
+  + validateJsonRequired(n : JsonNode, name : String) : void
+  + validateJsonObject(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonNumber(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonLong(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonString(n : JsonNode, name : String, required : boolean) : void
+  + validateJsonArray(n : JsonNode, name : String, required : boolean) : void
+}
+
+' 5) AppContext
+class AppContext {
+  
+  - static instance : AppContext
+  - eventBus : EventBus
+  - asyncEventBus : EventBus
+  - mailEventBus : EventBus
+  - importEventBus : EventBus
+  - feedService : FeedService
+  - indexingService : IndexingService
+  - asyncExecutorList : List<ExecutorService>
+
+  
+  - AppContext()
+  + static getInstance() : AppContext
+  - resetEventBus() : void
+  - newAsyncEventBus() : EventBus
+  + waitForAsync() : void
+  + getEventBus() : EventBus
+  + getAsyncEventBus() : EventBus
+  + getMailEventBus() : EventBus
+  + getImportEventBus() : EventBus
+  + getFeedService() : FeedService
+  + getIndexingService() : IndexingService
+}
+
+' 6) ReaderAgent
+class ReaderAgent {
+  
+  - listeners : List<DeploymentStatusListener>
+  - trayController : TrayController
+  - frame : AgentFrame
+  - elevated : boolean
+  - readerDeployer : ReaderDeployer
+  - setting : Setting
+
+  
+  + ReaderAgent()
+  + notifyDeploymentInfo() : void
+  - setLookAndFeel() : void
+  + checkElevation(args : String...) : void
+  - isElevationNeeded() : boolean
+  + addListener(listener : DeploymentStatusListener) : void
+  + showStatusPanel() : void
+  + showTrayIconMessage() : void
+  + exit() : void
+  + openBrowser() : void
+  - start(args : List<String>) : void
+  + static main(args : String[]) : void
+  + getReaderDeployer() : ReaderDeployer
+  - isElevated() : boolean
+  + getSetting() : Setting
+}
+
+' 7) ReaderDeployer
+class ReaderDeployer {
+  
+  - static final READER_WAR : String
+  - startTime : Date
+  - server : Server
+  - readerAgent : ReaderAgent
+  - exception : Exception
+  - serverState : ServerState
+
+  
+  + ReaderDeployer(readerAgent : ReaderAgent)
+  + start() : void
+  + stop() : void
+  + getErrorMessage() : String
+  + getMemoryUsed() : int
+  + getUrl() : String
+  + getDeploymentStatus() : DeploymentStatus
+  + lifeCycleStarting(event : LifeCycle) : void
+  + lifeCycleStarted(event : LifeCycle) : void
+  + lifeCycleStopping(event : LifeCycle) : void
+  + lifeCycleStopped(event : LifeCycle) : void
+  + lifeCycleFailure(event : LifeCycle, cause : Throwable) : void
+}
+
+' 8) AgentFrame
+class AgentFrame {
+  
+  - static final serialVersionUID : long
+  - final statusPanel : StatusPanel
+  - final settingPanel : SettingPanel
+  - tabbedPane : JTabbedPane
+  - closeButton : JButton
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + AgentFrame(readerAgent : ReaderAgent)
+  + centerComponent() : void
+  - initComponent() : void
+  + showStatusPanel() : void
+  + showSettingPanel() : void
+  - setIcon(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 9) TrayController
+class TrayController {
+  
+  - readerAgent : ReaderAgent
+  - trayIcon : TrayIcon
+  - openAction : Action
+  - controlPanelAction : Action
+  - hideAction : Action
+  - startedImage : Image
+  - stoppedImage : Image
+
+  
+  + TrayController(readerAgent : ReaderAgent)
+  + showMessage() : void
+  - createImage(resourceName : String) : Image
+  - createMenuItem(action : Action) : MenuItem
+  + uninstallComponents() : void
+  - setTrayImage(image : Image) : void
+  + notifyDeploymentStatus(deploymentStatus : DeploymentStatus) : void
+}
+
+' 10) IndexingService
+class IndexingService {
+  
+  - static log : Logger
+  - directory : Directory
+  - directoryReader : DirectoryReader
+  - luceneStorageConfig : String
+
+  
+  # startUp() : void
+  # shutDown() : void
+  # runOneIteration() : void
+  # scheduler() : Scheduler
+  + searchArticles(userId : String, searchQuery : String, offset : Integer, limit : Integer) : PaginatedList<UserArticleDto>
+  + rebuildIndex() : void
+  + getDirectory() : Directory
+  + getDirectoryReader() : DirectoryReader
+}
+
+' 11) RebuildIndexAsyncEvent
+class RebuildIndexAsyncEvent {
+  
+  
+
+  
+  + toString() : String
+}
+
+' 12) RebuildIndexAsyncListener
+class RebuildIndexAsyncListener {
+  
+  - static final log : Logger
+
+  
+  + onArticleCreated(rebuildIndexAsyncEvent : RebuildIndexAsyncEvent) : void
+}
+
+' 13) SortCriteria
+class SortCriteria {
+  
+  - column : int
+  - asc : boolean
+  - sortQuery : String
+
+  
+  + SortCriteria(sortQuery : String)
+  + SortCriteria(column : Integer, asc : Boolean)
+  + getSortQuery() : String
+  + getColumn() : int
+  + isAsc() : boolean
+}
+
+' 14) QueryParam
+class QueryParam {
+  
+  - queryString : String
+  - criteriaList : List<String>
+  - parameterMap : Map<String, Object>
+  - sortCriteria : SortCriteria
+  - filterCriteria : FilterCriteria
+  - groupByList : List<String>
+  - resultMapper : ResultMapper
+
+  
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, groupByList : List<String>, resultMapper : ResultMapper)
+  + QueryParam(queryString : String, criteriaList : List<String>, parameterMap : Map<String, Object>, sortCriteria : SortCriteria, filterCriteria : FilterCriteria, resultMapper : ResultMapper)
+  + getQueryString() : String
+  + setQueryString(queryString : String) : void
+  + getSortCriteria() : SortCriteria
+  + setSortCriteria(sortCriteria : SortCriteria) : void
+  + getCriteriaList() : List<String>
+  + getParameterMap() : Map<String, Object>
+  + getFilterCriteria() : FilterCriteria
+  + getGroupByList() : List<String>
+  + getResultMapper() : ResultMapper
+}
+
+' 15) FilterCriteria
+class FilterCriteria {
+  
+  - filterColumnList : List<FilterColumn>
+
+  
+  + FilterCriteria(filterColumnList : List<FilterColumn>)
+  + getFilterColumnList() : List<FilterColumn>
+}
+
+' 16) FilterColumn
+class FilterColumn {
+  
+  # column : String
+  # filter : String
+
+  
+  + FilterColumn(column : String, filter : String)
+  + getColumn() : String
+  + getFilter() : String
+  + getPredicate() : String
+  + getParamValue() : Object
+  + getParamName() : String
+  + hasParam() : boolean
+}
+
+' 17) SearchResource
+class SearchResource {
+  
+  
+
+  
+  + get(query : String, limit : Integer, offset : Integer)
+}
+
+' 18) PaginatedLists
+class PaginatedLists {
+  
+  - DEFAULT_PAGE_SIZE : int
+  - MAX_PAGE_SIZE : int
+
+  
+  + create(pageSize : Integer, offset : Integer) : PaginatedList<E>
+  + create() : PaginatedList<E>
+  + executeQuery(queryParam : QueryParam) : List<E>
+  + executePaginatedQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam, sortCriteria : SortCriteria) : void
+  - executeCountQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - executeResultQuery(paginatedList : PaginatedList<E>, queryParam : QueryParam) : void
+  - getQueryString(queryParam : QueryParam) : String
+  - getNativeCountQuery(queryParam : QueryParam) : String
+  - getOrderByClause(sortCriteria : SortCriteria) : String
+  - mapQueryParam(query : Query, queryParam : QueryParam) : void
+  - mapFilterColumn(query : Query, queryParam : QueryParam) : void
+}
+
+' 19) PaginatedList<T>
+class PaginatedList {
+  
+  - limit : int
+  - offset : int
+  - resultCount : int
+  - resultList : List<T>
+
+  
+  + PaginatedList(pageSize : int, offset : int)
+  + getResultCount() : int
+  + setResultCount(resultCount : int) : void
+  + getResultList() : List<T>
+  + setResultList(resultList : List<T>) : void
+  + getLimit() : int
+  + getOffset() : int
+}
+
+' 20) LuceneUtil
+class LuceneUtil {
+  
+  - static log : Logger
+
+  
+  + static handle(runnable : LuceneRunnable) : void
+}
+
+' 21) LogCriteria
+class LogCriteria {
+  
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + getLevel() : String
+  + setLevel(level : String) : LogCriteria
+  + getTag() : String
+  + setTag(tag : String) : LogCriteria
+  + getMessage() : String
+  + setMessage(message : String) : LogCriteria
+}
+
+' 22) LogEntry
+class LogEntry {
+  
+  - timestamp : long
+  - level : String
+  - tag : String
+  - message : String
+
+  
+  + LogEntry(timestamp : long, level : String, tag : String, message : String)
+  + getTimestamp() : long
+  + getLevel() : String
+  + getTag() : String
+  + getMessage() : String
+}
+
+' 23) MemoryAppender
+class MemoryAppender {
+  
+  - size : int
+  - logQueue : Queue<LogEntry>
+
+  
+  + requiresLayout() : boolean
+  + close() : void
+  + append(event : LoggingEvent) : void
+  - getLoggerName(event : LoggingEvent) : String
+  + getLogList() : Queue<LogEntry>
+  + setSize(size : int) : void
+  + find(criteria : LogCriteria, list : PaginatedList<LogEntry>) : void
+}
+
+' 24) DeadEventListener
+class DeadEventListener {
+  
+  - static final log : Logger
+
+  
+  + onDeadEvent(deadEvent : DeadEvent) : void
+}
+
+
+
+' 37) ValidationUtil
+class ValidationUtil {
+  
+  - static EMAIL_PATTERN : Pattern
+  - static HTTP_URL_PATTERN : Pattern
+  - static ALPHANUMERIC_PATTERN : Pattern
+
+  
+  + static validateRequired(s : Object, name : String) : void
+  + static validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer, nullable : boolean) : String
+  + static validateLength(s : String, name : String, lengthMin : Integer, lengthMax : Integer) : String
+  + static validateStringNotBlank(s : String, name : String) : String
+  + static validateEmail(s : String, name : String) : void
+  + static validateHttpUrl(s : String, name : String) : String
+  + static validateAlphanumeric(s : String, name : String) : void
+  + static validateDate(s : String, name : String, nullable : boolean) : Date
+}
+
+' 38) CategoryResource
+class CategoryResource {
+  
+  
+
+  
+  + list()
+  + get(id : String, unread : boolean, limit : Integer, afterArticle : String)
+  + add(name : String)
+  + delete(id : String)
+  + read(id : String)
+  + update(id : String, name : String, order : Integer, folded : Boolean)
+}
+
+' 39) CategoryDao
+class CategoryDao {
+  
+  - em : EntityManager
+
+  
+  + create(category : Category) : String
+  + update(category : Category) : Category
+  + reorder(category : Category, order : int) : void
+  + delete(id : String) : void
+  + getRootCategory(userId : String) : Category
+  + getCategory(id : String, userId : String) : Category
+  + getCategoryCount(parentId : String, userId : String) : int
+  + findAllCategory(userId : String) : List<Category>
+  + findSubCategory(parentId : String, userId : String) : List<Category>
+}
+
+' 40) Category
+class Category {
+  
+  - id : String
+  - userId : String
+  - parentId : String
+  - name : String
+  - order : Integer
+  - folded : boolean
+  - createDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getParentId() : String
+  + setParentId(parentId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getOrder() : Integer
+  + setOrder(order : Integer) : void
+  + isFolded() : boolean
+  + setFolded(folded : boolean) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 41) Config
+class Config {
+  
+  - id : ConfigType
+  - value : String
+
+  
+  + getId() : ConfigType
+  + setId(id : ConfigType) : void
+  + getValue() : String
+  + setValue(value : String) : void
+  + toString() : String
+}
+
+' 42) ConfigDao
+class ConfigDao {
+  
+  - em : EntityManager
+
+  
+  + getById(id : ConfigType) : Config
+}
+
+' 43) ConfigUtil
+class ConfigUtil {
+  
+  
+
+  
+  + static getConfigStringValue(configType : ConfigType) : String
+  + static getConfigBundle() : ResourceBundle
+  + static getConfigIntegerValue(configType : ConfigType) : int
+  + static getConfigBooleanValue(configType : ConfigType) : boolean
+}
+
+' 44) MessageUtil
+class MessageUtil {
+  
+  - static final locale : Locale
+
+  
+  + static getMessage(key : String, args : Object...) : String
+}
+
+' 45) EnvironmentUtil
+class EnvironmentUtil {
+  
+  - static OS : String
+  - static TEST_ENV : String
+  - static WINDOWS_APPDATA : String
+  - static MAC_OS_USER_HOME : String
+  - static READER_HOME : String
+  - static APPLICATION_LOG_ENABLED : String
+  - static SSL_TRUST_ALL : String
+  - static HIBERNATE_PROPERTIES : String
+  - static webappContext : boolean
+
+  
+  + static isWindows() : boolean
+  + static isMacOs() : boolean
+  + static isUnix() : boolean
+  + static isUnitTest() : boolean
+  + static getWindowsAppData() : String
+  + static getMacOsUserHome() : String
+  + static getReaderHome() : String
+  + static getHibernateProperties() : String
+  + static isApplicationLogEnabled() : boolean
+  + static isSslTrustAll() : boolean
+  + static isWebappContext() : boolean
+  + static setWebappContext(webappContext : boolean) : void
+}
+
+' 46) ResourceUtil
+class ResourceUtil {
+  
+  
+
+  
+  + static list(clazz : Class<?>, path : String, filter : FilenameFilter) : List<String>
+  + static list(clazz : Class<?>, path : String) : List<String>
+  + static loadPropertiesFromUrl(url : URL) : Map<Object, Object>
+}
+
+' 47) DirectoryUtil
+class DirectoryUtil {
+  
+  
+
+  
+  + static getBaseDataDirectory() : File
+  + static getDbDirectory() : File
+  + static getFaviconDirectory() : File
+  + static getLuceneDirectory() : File
+  + static getLogDirectory() : File
+  - static getDataSubDirectory(subdirectory : String) : File
+}
+
+' 48) SessionUtil
+class SessionUtil {
+  
+  
+
+  
+  + static getCurrentSession() : Session
+}
+
+' 49) ThreadLocalContext
+class ThreadLocalContext {
+  
+  + static threadLocalContext : ThreadLocal<ThreadLocalContext>
+  - entityManager : EntityManager
+
+  
+  + static get() : ThreadLocalContext
+  + static cleanup() : void
+  + isInTransactionalContext() : boolean
+  + getEntityManager() : EntityManager
+  + setEntityManager(entityManager : EntityManager) : void
+}
+
+' 50) AppResource
+class AppResource {
+  
+  
+
+  
+  + version()
+  + log()
+  + batchReindex()
+  + mapPort()
+}
+
+' 51) ForbiddenClientException
+class ForbiddenClientException {
+  
+  - static final serialVersionUID : long
+
+  
+  + ForbiddenClientException()
+}
+
+' 52) ClientException
+class ClientException {
+  
+  - static final serialVersionUID : long
+  - static final log : Logger
+
+  
+  + ClientException(type : String, message : String, e : Exception)
+  + ClientException(type : String, message : String)
+}
+
+' 53) ServerException
+class ServerException {
+  
+  - static final serialVersionUID : long
+  - static final log : Logger
+
+  
+  + ServerException(type : String, message : String, e : Exception)
+  + ServerException(type : String, message : String)
+}
+
+' 54) GenericExceptionMapper
+class GenericExceptionMapper {
+  
+  - static final log : Logger
+
+  
+  + toResponse(e : Exception) : Response
+}
+
+' 55) ManagedProviderConnectionHelper
+class ManagedProviderConnectionHelper {
+  
+  - cfgProperties : Properties
+  - serviceRegistry : StandardServiceRegistryImpl
+  - connection : Connection
+
+  
+  + ManagedProviderConnectionHelper(cfgProperties : Properties)
+  + prepare(needsAutoCommit : boolean) : void
+  - static createServiceRegistry(properties : Properties) : StandardServiceRegistryImpl
+  + getConnection() : Connection
+  + release() : void
+  - releaseConnection() : void
+  - releaseServiceRegistry() : void
+}
+
+' 56) SuppliedConnectionProviderConnectionHelper
+class SuppliedConnectionProviderConnectionHelper {
+  
+  - provider : ConnectionProvider
+  - connection : Connection
+  - toggleAutoCommit : boolean
+
+  
+  + SuppliedConnectionProviderConnectionHelper(provider : ConnectionProvider)
+  + prepare(needsAutoCommit : boolean) : void
+  + getConnection() : Connection
+  + release() : void
+}
+
+' 57) EntityManagerUtil
+class EntityManagerUtil {
+  
+  
+
+  
+  + static flush() : void
+}
+
+' 58) EMF
+class EMF {
+  
+  - static final log : Logger
+  - static properties : Map<Object, Object>
+  - static emfInstance : EntityManagerFactory
+
+  
+  - static getEntityManagerProperties() : Map<Object, Object>
+  - static getEntityManagerPropertiesFromEnvironment() : Map<Object, Object>
+  - EMF()
+  + static get() : EntityManagerFactory
+  + static isDriverHsql() : boolean
+  + static isDriverPostgresql() : boolean
+  + static getDriver() : String
+}
+
+' 59) DeploymentStatus
+class DeploymentStatus {
+  
+  - final serverState : ServerState
+  - final startTime : Date
+  - final url : String
+  - final memoryUsed : int
+  - final errorMessage : String
+
+  
+  + DeploymentStatus(serverState : ServerState, startTime : Date, url : String, memoryUsed : int, errorMessage : String)
+  + getServerState() : ServerState
+  + getStartTime() : Date
+  + getUrl() : String
+  + getMemoryUsed() : int
+  + getErrorMessage() : String
+}
+
+' 60) Constants
+class Constants {
+  
+  + static final REQUEST_CODE_ARTICLES : int
+  + static final REQUEST_CODE_MANAGE_CATEGORIES : int
+
+  
+  
+}
+
+' 61) DateUtil
+class DateUtil {
+  
+  - static final log : Logger
+  - static final TIMEZONE_CODE_MAP : ImmutableMap<String, String>
+
+  
+  + static guessTimezoneOffset(date : String) : String
+  + static parseDate(date : String, df : DateTimeFormatter) : Date
+}
+
+' 62) Setting
+class Setting {
+  
+  - static final READER_AGENT_PROPERTIES_FILE : String
+  + static final DEFAULT_HOST : String
+  + static final DEFAULT_PORT : int
+  + static final DEFAULT_CONTEXT_PATH : String
+  + static final DEFAULT_AUTO_START : boolean
+  + static final DEFAULT_SECURE : boolean
+  - host : String
+  - port : int
+  - contextPath : String
+  - readerHome : String
+  - autoStart : boolean
+  - secure : boolean
+  - keyStorePath : String
+  - keyStorePassword : String
+  - keyManagerPassword : String
+
+  
+  + Setting()
+  + read() : void
+  + save() : void
+  + getHost() : String
+  + setHost(host : String) : void
+  + getPort() : int
+  + setPort(port : int) : void
+  + getContextPath() : String
+  + setContextPath(contextPath : String) : void
+  + getReaderHome() : String
+  + setReaderHome(readerHome : String) : void
+  + isAutoStart() : boolean
+  + setAutoStart(autoStart : boolean) : void
+  + isSecure() : boolean
+  + setSecure(secure : boolean) : void
+  + getKeyStorePath() : String
+  + setKeyStorePath(keyStorePath : String) : void
+  + getKeyStorePassword() : String
+  + setKeyStorePassword(keyStorePassword : String) : void
+  + getKeyManagerPassword() : String
+  + setKeyManagerPassword(keyManagerPassword : String) : void
+}
+
+' 63) SettingPanel
+class SettingPanel {
+  
+  - static final serialVersionUID : long
+  - static final INTEGER_FORMAT : Format
+  - portTextField : JFormattedTextField
+  - contextPathComboBox : JComboBox<String>
+  - autoStartCheckBox : JCheckBox
+  - secureCheckBox : JCheckBox
+  - keyStorePathTextField : JFormattedTextField
+  - keyStorePasswordTextField : JFormattedTextField
+  - keyManagerPasswordTextField : JFormattedTextField
+  - defaultButton : JButton
+  - saveButton : JButton
+  - readerAgent : ReaderAgent
+
+  
+  + SettingPanel(readerAgent : ReaderAgent)
+  + readSetting() : void
+  + saveSetting() : void
+  - initComponent() : void
+  - getContextPath() : String
+  - getPort() : int
+  - getKeyStorePath() : String
+  - getKeyStorePassword() : String
+  - getKeyManagerPassword() : String
+}
+
+' 64) StatusPanel
+class StatusPanel {
+  
+  - static final serialVersionUID : long
+  - static final DATE_FORMAT : DateFormat
+  - final readerAgent : ReaderAgent
+  - statusTextField : JTextField
+  - startedTextField : JTextField
+  - memoryTextField : JTextField
+  - errorTextField : JTextArea
+  - startButton : JButton
+  - stopButton : JButton
+  - urlButton : JButton
+
+  
+  + StatusPanel(readerAgent : ReaderAgent)
+  - initComponent() : void
+  + notifyDeploymentStatus(status : DeploymentStatus) : void
+}
+
+' 65) Job
+class Job {
+  
+  - id : String
+  - userId : String
+  - name : String
+  - createDate : Date
+  - startDate : Date
+  - endDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getStartDate() : Date
+  + setStartDate(startDate : Date) : void
+  + getEndDate() : Date
+  + setEndDate(endDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 66) JobDao
+class JobDao {
+  
+  
+
+  
+  # getQueryParam(criteria : JobCriteria, filterCriteria : FilterCriteria) : QueryParam
+  + create(job : Job) : String
+  + getActiveJob(id : String) : Job
+  + delete(id : String) : void
+  + update(job : Job) : Job
+}
+
+' 67) JobDto
+class JobDto {
+  
+  - id : String
+  - name : String
+  - userId : String
+  - createTimestamp : Long
+  - startTimestamp : Long
+  - endTimestamp : Long
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getUserId() : String
+  + setUserId(userId : String) : void
+  + getCreateTimestamp() : Long
+  + setCreateTimestamp(ts : Long) : void
+  + getStartTimestamp() : Long
+  + setStartTimestamp(ts : Long) : void
+  + getEndTimestamp() : Long
+  + setEndTimestamp(ts : Long) : void
+}
+
+' 68) JobEvent
+class JobEvent {
+  
+  - id : String
+  - jobId : String
+  - name : String
+  - value : String
+  - createDate : Date
+  - deleteDate : Date
+
+  
+  + getId() : String
+  + setId(id : String) : void
+  + getJobId() : String
+  + setJobId(jobId : String) : void
+  + getName() : String
+  + setName(name : String) : void
+  + getValue() : String
+  + setValue(value : String) : void
+  + getCreateDate() : Date
+  + setCreateDate(createDate : Date) : void
+  + getDeleteDate() : Date
+  + setDeleteDate(deleteDate : Date) : void
+}
+
+' 69) JobEventCriteria
+class JobEventCriteria {
+  
+  - jobId : String
+
+  
+  + getJobId() : String
+  + setJobId(jobId : String) : JobEventCriteria
+}
+
+' 70) JobEventDao
+class JobEventDao {
+  
+  
+
+  
+  # getQueryParam(criteria : JobEventCriteria, filterCriteria : FilterCriteria) : QueryParam
+  + create(jobEvent : JobEvent) : String
+  + delete(id : String) : void
+}
+
+' 71) JobEventMapper
+class JobEventMapper {
+  
+  
+
+  
+  + map(o : Object[]) : JobEventDto
+}
+
+' 72) JobMapper
+class JobMapper {
+  
+  
+
+  
+  + map(o : Object[]) : JobDto
+}
+
+
+@enduml
